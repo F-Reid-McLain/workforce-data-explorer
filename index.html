@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Visualization Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Roboto:wght@400;500;700&family=Montserrat:wght@400;500;600&family=Lato:wght@400;700&family=Playfair+Display:wght@400;700&family=Source+Code+Pro:wght@400;500&display=swap">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/panels.css">
+    <link rel="stylesheet" href="css/chart.css">
+    <!-- Chart.js for charting -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!-- html2canvas for PNG/SVG export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- jsPDF for PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Data labels on bars -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <!-- Annotation plugin for reference lines -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+</head>
+<body>
+    <header class="main-header">
+        <div class="header-inner">
+            <a href="index.html" class="site-logo">WORKFORCE <span class="logo-accent">data</span></a>
+            <nav class="main-nav">
+                <a href="index.html"   class="nav-link active">Builder</a>
+                <a href="gallery.html" class="nav-link">Gallery</a>
+                <a href="reports.html" class="nav-link">Reports</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="main-content">
+            <!-- Control Panel -->
+            <aside class="control-panel">
+                <section class="control-section">
+                    <h3>Data Source</h3>
+                    <select id="dataSourceSelect">
+                        <option value="">-- Select Data Source --</option>
+                        <option value="Industry_Snapshot.csv">Industry Snapshot</option>
+                        <option value="Occupation_Snapshot.csv">Occupation Snapshot</option>
+                        <option value="Occupation_Wages.csv">Occupation Wages</option>
+                    </select>
+                </section>
+
+                <section class="control-section" id="codeLevelSection" style="display:none;">
+                    <h3>Code Level</h3>
+                    <select id="codeLevel"></select>
+                </section>
+
+                <section class="control-section" id="codeFilterSection" style="display:none;">
+                    <h3 id="codeFilterLabel">Sector Filter</h3>
+                    <select id="codeFilter">
+                        <option value="">All</option>
+                    </select>
+                </section>
+
+                <section class="control-section">
+                    <h3>Select Columns</h3>
+                    <div id="columnSelection" class="column-list">
+                        <p class="placeholder">Select a data source first</p>
+                    </div>
+                </section>
+
+                <section class="control-section">
+                    <h3>Chart Type</h3>
+                    <div id="chartTypeOptions" class="chart-type-options">
+                        <label>
+                            <input type="radio" name="chartType" value="bar" checked>
+                            Vertical Bar
+                        </label>
+                        <label>
+                            <input type="radio" name="chartType" value="horizontalBar">
+                            Horizontal Bar
+                        </label>
+                        <label>
+                            <input type="radio" name="chartType" value="line">
+                            Line Chart
+                        </label>
+                        <label>
+                            <input type="radio" name="chartType" value="pie">
+                            Pie Chart
+                        </label>
+                        <label>
+                            <input type="radio" name="chartType" value="doughnut">
+                            Doughnut Chart
+                        </label>
+                        <label>
+                            <input type="radio" name="chartType" value="scatter">
+                            Scatter Chart
+                        </label>
+                    </div>
+                </section>
+
+            </aside>
+
+            <!-- Chart Column -->
+            <div class="chart-column">
+                <main class="chart-area">
+                    <div id="chartContainer">
+                        <canvas id="myChart" width="400" height="200"></canvas>
+                    </div>
+                    <div id="noDataMessage" class="no-data-message">
+                        <p>Select a data source and columns to generate a chart</p>
+                    </div>
+                </main>
+
+                <!-- Footer: tabbed customization -->
+                <div class="chart-footer">
+                    <div class="footer-tabs">
+                        <button class="footer-tab active" data-tab="color">Color</button>
+                        <button class="footer-tab" data-tab="text">Text</button>
+                        <button class="footer-tab" data-tab="layout">Layout</button>
+                        <button class="footer-tab" data-tab="style">Style</button>
+                        <button class="footer-tab" data-tab="presets">Presets</button>
+                        <button class="footer-tab" data-tab="export">Export</button>
+                    </div>
+
+                    <div class="footer-panels">
+
+                        <!-- ═══ Color tab ═══════════════════════════════════════ -->
+                        <div class="footer-panel" id="tab-color">
+                            <div class="display-controls">
+
+                                <!-- Chart palette -->
+                                <div class="display-section-header">Chart Palette</div>
+
+                                <div class="display-field" style="flex-basis:100%;">
+                                    <div class="color-modes">
+                                        <button class="color-mode-btn active" data-mode="preset">Preset</button>
+                                        <button class="color-mode-btn" data-mode="perSeries">Per Series</button>
+                                        <button class="color-mode-btn" data-mode="gradient">Gradient</button>
+                                    </div>
+                                    <div id="colorPanel-preset" class="color-panel" style="margin-top:10px;">
+                                        <select id="colorScheme">
+                                            <option value="default">Default</option>
+                                            <option value="vibrant">Vibrant</option>
+                                            <option value="pastel">Pastel</option>
+                                            <option value="muted">Muted</option>
+                                            <option value="custom">Custom</option>
+                                        </select>
+                                        <div id="customColorPanel" class="custom-colors-row" style="display:none;">
+                                            <input type="color" id="primaryColor" value="#3498db" title="Color 1">
+                                            <input type="color" id="secondaryColor" value="#e74c3c" title="Color 2">
+                                            <input type="color" id="accentColor" value="#2ecc71" title="Color 3">
+                                        </div>
+                                    </div>
+                                    <div id="colorPanel-perSeries" class="color-panel" style="display:none; margin-top:10px;">
+                                        <div id="perSeriesColors" class="per-series-colors">
+                                            <span class="color-placeholder">Select columns to assign colors</span>
+                                        </div>
+                                    </div>
+                                    <div id="colorPanel-gradient" class="color-panel" style="display:none; margin-top:10px;">
+                                        <div class="gradient-pickers">
+                                            <div class="gradient-stop">
+                                                <span>Start</span>
+                                                <input type="color" id="gradientStart" value="#6366f1">
+                                            </div>
+                                            <span class="gradient-arrow">→</span>
+                                            <div class="gradient-stop">
+                                                <span>End</span>
+                                                <input type="color" id="gradientEnd" value="#22d3ee">
+                                            </div>
+                                            <div id="gradientPreview" class="gradient-preview"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Canvas -->
+                                <div class="display-section-header">Canvas</div>
+
+                                <div class="display-field">
+                                    <span class="display-label">Background</span>
+                                    <input type="color" id="chartBg" value="#f7f6f3">
+                                </div>
+
+                                <!-- Text colors -->
+                                <div class="display-section-header">Text Colors</div>
+
+                                <div class="display-field">
+                                    <span class="display-label">Title &amp; Legend</span>
+                                    <input type="color" id="textColor" value="#374151">
+                                </div>
+                                <div class="display-field">
+                                    <span class="display-label">Category Labels</span>
+                                    <input type="color" id="wordTextColor" value="#374151" title="Words / category labels">
+                                </div>
+                                <div class="display-field">
+                                    <span class="display-label">Value Labels</span>
+                                    <input type="color" id="numberTextColor" value="#374151" title="Numbers / value labels">
+                                </div>
+
+                                <!-- Axis & grid colors -->
+                                <div class="display-section-header">Axes &amp; Grid</div>
+
+                                <div class="display-field">
+                                    <span class="display-label">Axis Color</span>
+                                    <input type="color" id="axisColor" value="#d1d5db">
+                                </div>
+                                <div class="display-field">
+                                    <span class="display-label">Grid Color</span>
+                                    <input type="color" id="gridColor" value="#e4e4e7">
+                                </div>
+
+                                <!-- Bar / area opacity -->
+                                <div class="display-section-header">Bars</div>
+
+                                <div class="display-field">
+                                    <span class="display-label">Opacity</span>
+                                    <div class="display-row">
+                                        <input type="range" id="barOpacity" min="0" max="100" value="100" class="display-slider">
+                                        <span id="barOpacityValue" class="display-slider-value">100%</span>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <!-- ═══ Text tab ════════════════════════════════════════ -->
+                        <div class="footer-panel" id="tab-text" style="display:none;">
+                            <div class="display-controls">
+
+                                <!-- Title -->
+                                <div class="display-section-header">Title</div>
+
+                                <div class="display-field">
+                                    <span class="display-label">Text</span>
+                                    <div class="display-row">
+                                        <input type="text" id="chartTitle" placeholder="Chart title" class="display-text-input">
+                                        <label class="display-inline-check"><input type="checkbox" id="showTitle" checked> Show</label>
+                                    </div>
+                                </div>
+                                <div class="display-field">
+                                    <span class="display-label">Font</span>
+                                    <select id="titleFont" class="display-select">
+                                        <option value="Inter, system-ui, sans-serif">Inter</option>
+                                        <option value="'Roboto', sans-serif">Roboto</option>
+                                        <option value="'Montserrat', sans-serif">Montserrat</option>
+                                        <option value="'Lato', sans-serif">Lato</option>
+                                        <option value="'Playfair Display', serif">Playfair Display</option>
+                                        <option value="'Source Code Pro', monospace">Source Code Pro</option>
+                                        <option value="Georgia, serif">Georgia</option>
+                                        <option value="Arial, sans-serif">Arial</option>
+                                    </select>
+                                </div>
+                                <div class="display-field">
+                                    <span class="display-label">Align &amp; Size</span>
+                                    <div class="display-row">
+                                        <select id="titleAlign" class="display-select-sm">
+                                            <option value="center">Center</option>
+                                            <option value="start">Left</option>
+                                            <option value="end">Right</option>
+                                        </select>
+                                        <input type="number" id="titleSize" value="16" min="10" max="48" class="display-number-input">
+                                        <span class="display-unit">px</span>
+                                    </div>
+                                </div>
+
+                                <!-- Legend -->
+                                <div class="display-section-header">Legend</div>
+
+                                <div class="display-field">
+                                    <span class="display-label">Font</span>
+                                    <select id="legendFont" class="display-select">
+                                        <option value="Inter, system-ui, sans-serif">Inter</option>
+                                        <option value="'Roboto', sans-serif">Roboto</option>
+                                        <option value="'Montserrat', sans-serif">Montserrat</option>
+                                        <option value="'Lato', sans-serif">Lato</option>
+                                        <option value="'Playfair Display', serif">Playfair Display</option>
+                                        <option value="'Source Code Pro', monospace">Source Code Pro</option>
+                                        <option value="Georgia, serif">Georgia</option>
+                                        <option value="Arial, sans-serif">Arial</option>
+                                    </select>
+                                </div>
+                                <div class="display-field">
+                                    <span class="display-label">Position</span>
+                                    <select id="legendPosition" class="display-select-sm">
+                                        <option value="top">Top</option>
+                                        <option value="bottom">Bottom</option>
+                                        <option value="left">Left</option>
+                                        <option value="right">Right</option>
+                                    </select>
+                                </div>
+
+                                <!-- Body -->
+                                <div class="display-section-header">Body</div>
+
+                                <div class="display-field">
+                                    <span class="display-label">Font Size</span>
+                                    <div class="display-row">
+                                        <input type="number" id="chartFontSize" value="12" min="8" max="28" class="display-number-input">
+                                        <span class="display-unit">px</span>
+                                    </div>
+                                </div>
+
+                                <!-- Axis labels -->
+                                <div class="display-section-header">Axis Labels</div>
+
+                                <div class="display-field">
+                                    <span class="display-label">X Axis</span>
+                                    <input type="text" id="xAxisTitle" placeholder="X axis label" class="display-text-input">
+                                </div>
+                                <div class="display-field">
+                                    <span class="display-label">Y Axis</span>
+                                    <input type="text" id="yAxisTitle" placeholder="Y axis label" class="display-text-input">
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <!-- ═══ Layout tab ══════════════════════════════════════ -->
+                        <div class="footer-panel" id="tab-layout" style="display:none;">
+                            <div class="display-controls">
+
+                                <!-- Canvas -->
+                                <div class="display-section-header">Canvas</div>
+
+                                <div class="display-field">
+                                    <span class="display-label">Aspect Ratio</span>
+                                    <select id="aspectRatio" class="display-select-sm">
+                                        <option value="1">1:1 Square</option>
+                                        <option value="1.333">4:3</option>
+                                        <option value="1.777">16:9</option>
+                                        <option value="2" selected>2:1 Wide</option>
+                                        <option value="3">3:1 Banner</option>
+                                    </select>
+                                </div>
+
+                                <!-- Axes -->
+                                <div class="display-section-header">Axes</div>
+
+                                <div class="display-field">
+                                    <span class="display-label">Show</span>
+                                    <div class="display-row">
+                                        <label class="display-inline-check"><input type="checkbox" id="showXAxis" checked> X axis</label>
+                                        <label class="display-inline-check"><input type="checkbox" id="showYAxis" checked> Y axis</label>
+                                    </div>
+                                </div>
+                                <div class="display-field">
+                                    <span class="display-label">Line Width</span>
+                                    <div class="display-row">
+                                        <input type="number" id="axisLineWidth" value="1" min="1" max="10" class="display-number-input">
+                                        <span class="display-unit">px</span>
+                                    </div>
+                                </div>
+                                <div class="display-field">
+                                    <span class="display-label">Bar Borders</span>
+                                    <label class="display-inline-check"><input type="checkbox" id="showBarBorder"> Show bar borders</label>
+                                </div>
+
+                                <!-- Grid -->
+                                <div class="display-section-header">Grid</div>
+
+                                <div class="display-field">
+                                    <span class="display-label">Style</span>
+                                    <select id="gridStyle" class="display-select-sm">
+                                        <option value="solid">Solid</option>
+                                        <option value="dashed">Dashed</option>
+                                        <option value="dotted">Dotted</option>
+                                    </select>
+                                </div>
+                                <div class="display-field">
+                                    <span class="display-label">Show</span>
+                                    <label class="display-inline-check"><input type="checkbox" id="showGrid" checked> Show grid lines</label>
+                                </div>
+
+                                <!-- Labels -->
+                                <div class="display-section-header">Label Visibility</div>
+
+                                <div class="display-field">
+                                    <span class="display-label">Show</span>
+                                    <div class="display-checks">
+                                        <label><input type="checkbox" id="showLegend" checked> Legend</label>
+                                        <label><input type="checkbox" id="showCodes" checked> Codes</label>
+                                        <label><input type="checkbox" id="showNames" checked> Names</label>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <!-- ═══ Style tab ═══════════════════════════════════════ -->
+                        <div class="footer-panel" id="tab-style" style="display:none;">
+                            <div class="display-controls">
+
+                                <!-- Data -->
+                                <div class="display-section-header">Data</div>
+
+                                <div class="display-field">
+                                    <span class="display-label">Max Rows</span>
+                                    <input type="number" id="maxRows" value="10" min="1" max="100" class="display-number-input">
+                                </div>
+                                <div class="display-field">
+                                    <span class="display-label">Sort</span>
+                                    <select id="sortOrder" class="display-select-sm">
+                                        <option value="none">None</option>
+                                        <option value="desc">Highest first</option>
+                                        <option value="asc">Lowest first</option>
+                                    </select>
+                                </div>
+                                <div class="display-field">
+                                    <span class="display-label">Number Format</span>
+                                    <select id="numberFormat" class="display-select-sm">
+                                        <option value="auto">Auto</option>
+                                        <option value="raw">Raw</option>
+                                        <option value="K">Thousands (K)</option>
+                                        <option value="M">Millions (M)</option>
+                                        <option value="percent">Percent (%)</option>
+                                        <option value="dollar">Dollar ($)</option>
+                                    </select>
+                                </div>
+                                <div class="display-field">
+                                    <span class="display-label">Stacked</span>
+                                    <label class="display-inline-check"><input type="checkbox" id="isStacked"> Stack series</label>
+                                </div>
+                                <div class="display-field">
+                                    <span class="display-label">Total Row</span>
+                                    <label class="display-inline-check"><input type="checkbox" id="totalInTitle"> Show total in title</label>
+                                </div>
+
+                                <!-- Bar style -->
+                                <div class="display-section-header">Bars</div>
+
+                                <div class="display-field">
+                                    <span class="display-label">Width</span>
+                                    <div class="display-row">
+                                        <input type="range" id="barSpacing" min="10" max="100" value="80" class="display-slider">
+                                        <span id="barSpacingValue" class="display-slider-value">80%</span>
+                                    </div>
+                                </div>
+                                <div class="display-field">
+                                    <span class="display-label">Labels</span>
+                                    <label class="display-inline-check"><input type="checkbox" id="showBarLabels"> Show values</label>
+                                    <label class="display-inline-check"><input type="checkbox" id="overlayBarLabels"> Overlay names</label>
+                                </div>
+
+                                <!-- Line & scatter -->
+                                <div class="display-section-header">Line &amp; Scatter</div>
+
+                                <div class="display-field">
+                                    <span class="display-label">Line Thickness</span>
+                                    <div class="display-row">
+                                        <input type="number" id="lineThickness" value="2" min="1" max="12" class="display-number-input">
+                                        <span class="display-unit">px</span>
+                                    </div>
+                                </div>
+                                <div class="display-field">
+                                    <span class="display-label">Point Style</span>
+                                    <select id="pointStyle" class="display-select-sm">
+                                        <option value="circle">Circle</option>
+                                        <option value="triangle">Triangle</option>
+                                        <option value="rect">Square</option>
+                                        <option value="rectRounded">Rounded rect</option>
+                                        <option value="star">Star</option>
+                                        <option value="cross">Cross</option>
+                                        <option value="dash">Dash</option>
+                                        <option value="false">None</option>
+                                    </select>
+                                </div>
+                                <div class="display-field">
+                                    <span class="display-label">Point Size</span>
+                                    <div class="display-row">
+                                        <input type="number" id="pointSize" value="3" min="0" max="20" class="display-number-input">
+                                        <span class="display-unit">px</span>
+                                    </div>
+                                </div>
+
+                                <!-- Reference line -->
+                                <div class="display-section-header">Reference Line</div>
+
+                                <div class="display-field">
+                                    <span class="display-label">Enable</span>
+                                    <label class="display-inline-check"><input type="checkbox" id="refLineEnabled"> Show reference line</label>
+                                </div>
+                                <div class="display-field">
+                                    <span class="display-label">Value</span>
+                                    <input type="number" id="refLineValue" value="0" step="any" class="display-number-input">
+                                </div>
+                                <div class="display-field">
+                                    <span class="display-label">Label</span>
+                                    <input type="text" id="refLineLabel" placeholder="Line label" class="display-text-input">
+                                </div>
+                                <div class="display-field">
+                                    <span class="display-label">Color</span>
+                                    <input type="color" id="refLineColor" value="#ef4444">
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <!-- ═══ Presets tab ═════════════════════════════════════ -->
+                        <div class="footer-panel" id="tab-presets" style="display:none;">
+                            <div class="preset-slots">
+                                <div class="preset-slot" id="preset-slot-0">
+                                    <span class="preset-slot-num">1</span>
+                                    <input type="text" class="preset-name" id="preset-name-0" placeholder="Preset 1" maxlength="30">
+                                    <button class="btn preset-save-btn" data-slot="0">Save</button>
+                                    <button class="btn btn-primary preset-load-btn" data-slot="0" style="display:none;">Load</button>
+                                    <button class="btn preset-clear-btn" data-slot="0" style="display:none;" title="Clear">×</button>
+                                </div>
+                                <div class="preset-slot" id="preset-slot-1">
+                                    <span class="preset-slot-num">2</span>
+                                    <input type="text" class="preset-name" id="preset-name-1" placeholder="Preset 2" maxlength="30">
+                                    <button class="btn preset-save-btn" data-slot="1">Save</button>
+                                    <button class="btn btn-primary preset-load-btn" data-slot="1" style="display:none;">Load</button>
+                                    <button class="btn preset-clear-btn" data-slot="1" style="display:none;" title="Clear">×</button>
+                                </div>
+                                <div class="preset-slot" id="preset-slot-2">
+                                    <span class="preset-slot-num">3</span>
+                                    <input type="text" class="preset-name" id="preset-name-2" placeholder="Preset 3" maxlength="30">
+                                    <button class="btn preset-save-btn" data-slot="2">Save</button>
+                                    <button class="btn btn-primary preset-load-btn" data-slot="2" style="display:none;">Load</button>
+                                    <button class="btn preset-clear-btn" data-slot="2" style="display:none;" title="Clear">×</button>
+                                </div>
+                                <div class="preset-slot" id="preset-slot-3">
+                                    <span class="preset-slot-num">4</span>
+                                    <input type="text" class="preset-name" id="preset-name-3" placeholder="Preset 4" maxlength="30">
+                                    <button class="btn preset-save-btn" data-slot="3">Save</button>
+                                    <button class="btn btn-primary preset-load-btn" data-slot="3" style="display:none;">Load</button>
+                                    <button class="btn preset-clear-btn" data-slot="3" style="display:none;" title="Clear">×</button>
+                                </div>
+                                <div class="preset-slot" id="preset-slot-4">
+                                    <span class="preset-slot-num">5</span>
+                                    <input type="text" class="preset-name" id="preset-name-4" placeholder="Preset 5" maxlength="30">
+                                    <button class="btn preset-save-btn" data-slot="4">Save</button>
+                                    <button class="btn btn-primary preset-load-btn" data-slot="4" style="display:none;">Load</button>
+                                    <button class="btn preset-clear-btn" data-slot="4" style="display:none;" title="Clear">×</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ═══ Export tab ══════════════════════════════════════ -->
+                        <div class="footer-panel" id="tab-export" style="display:none;">
+                            <div class="export-controls">
+                                <button id="downloadPNG" class="btn btn-primary">Download PNG</button>
+                                <button id="downloadSVG" class="btn btn-primary">Download SVG</button>
+                                <button id="downloadPDF" class="btn btn-primary">Download PDF</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/colors.js"></script>
+    <script src="js/chart.js"></script>
+    <script src="js/presets.js"></script>
+    <script src="js/export.js"></script>
+</body>
+</html>

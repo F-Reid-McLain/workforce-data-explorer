@@ -1,0 +1,10 @@
+# Raw source data (processed CSVs are tracked instead)
+Data/*.xlsx
+Data/~$*
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc

@@ -1,0 +1,298 @@
+/* ── Variables & Reset ───────────────────────────────────── */
+
+:root {
+    --bg:         #0d0d0f;
+    --surface:    #141416;
+    --surface-2:  #1c1c1f;
+    --border:     #27272a;
+    --border-2:   #3f3f46;
+    --text:       #d4d4d8;
+    --text-muted: #52525b;
+    --accent:     #6366f1;
+    --accent-dim: rgba(99, 102, 241, 0.12);
+    --radius:     6px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+}
+
+.container {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 28px 24px;
+}
+
+/* ── Site Header ─────────────────────────────────────────── */
+
+.main-header {
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 300;
+    width: 100%;
+}
+
+.header-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 24px;
+    height: 54px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.site-logo {
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--text);
+    line-height: 1;
+}
+
+.logo-accent {
+    font-weight: 300;
+    color: var(--text-muted);
+    letter-spacing: 1.5px;
+}
+
+.main-nav {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.nav-link {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    transition: color 0.2s;
+}
+
+.nav-link:hover { color: var(--text); }
+.nav-link.active { color: var(--accent); }
+
+/* ── Main layout ─────────────────────────────────────────── */
+
+.main-content {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 20px;
+    align-items: start;
+}
+
+/* ── Control panel (sidebar) ─────────────────────────────── */
+
+.control-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0;
+    position: sticky;
+    top: 24px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.control-section {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.control-section:last-child { border-bottom: none; }
+
+.control-section h3 {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+/* ── Form inputs ─────────────────────────────────────────── */
+
+select,
+input[type="text"],
+input[type="number"] {
+    width: 100%;
+    padding: 7px 10px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 0.875rem;
+    color: var(--text);
+    transition: border-color 0.15s;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2352525b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
+    cursor: pointer;
+}
+
+select:focus,
+input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+select option { background: var(--surface-2); color: var(--text); }
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+label:has(input[type="checkbox"]),
+label:has(input[type="radio"]) {
+    display: flex;
+    align-items: center;
+    color: var(--text);
+    cursor: pointer;
+    margin-bottom: 6px;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+    margin-right: 8px;
+    cursor: pointer;
+    accent-color: var(--accent);
+}
+
+input[type="color"] {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    background: none;
+    padding: 2px;
+}
+
+/* ── Chart type options ──────────────────────────────────── */
+
+.chart-type-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+}
+
+.chart-type-options label {
+    display: flex;
+    align-items: center;
+    padding: 5px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    color: var(--text);
+    cursor: pointer;
+    margin: 0;
+    transition: background 0.1s;
+}
+
+.chart-type-options label:hover { background: var(--surface-2); }
+
+.chart-type-options input[type="radio"] { margin-right: 6px; }
+
+/* ── Column selection ────────────────────────────────────── */
+
+.column-list {
+    max-height: 180px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-2);
+}
+
+.column-item {
+    display: flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+}
+
+.column-item:last-child { border-bottom: none; }
+.column-item:hover      { background: rgba(255,255,255,0.03); }
+
+.column-item input[type="checkbox"] { margin-right: 8px; flex-shrink: 0; }
+
+.column-item label {
+    margin: 0;
+    flex: 1;
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: var(--text);
+}
+
+.placeholder {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    padding: 12px;
+    display: block;
+}
+
+/* ── Buttons ─────────────────────────────────────────────── */
+
+.btn {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: var(--surface-2);
+    color: var(--text);
+    letter-spacing: 0.02em;
+}
+
+.btn-primary {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    color: #a5b4fc;
+}
+
+.btn-primary:hover {
+    background: rgba(99, 102, 241, 0.22);
+    border-color: #818cf8;
+    color: #c7d2fe;
+}
+
+.btn-primary:active { background: rgba(99, 102, 241, 0.28); }
+
+.export-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* ── Chart column ────────────────────────────────────────── */
+
+.chart-column {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+}

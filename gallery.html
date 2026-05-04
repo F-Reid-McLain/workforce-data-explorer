@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chart Gallery — Data Visualization Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <style>
+        :root {
+            --bg:         #0d0d0f;
+            --surface:    #141416;
+            --surface-2:  #1c1c1f;
+            --border:     #27272a;
+            --border-2:   #3f3f46;
+            --text:       #d4d4d8;
+            --text-muted: #52525b;
+            --accent:     #6366f1;
+            --accent-dim: rgba(99,102,241,0.12);
+            --radius:     8px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+            font-size: 14px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Site header (matches main builder) ─── */
+
+        .main-header {
+            background: var(--surface-2);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 300;
+            width: 100%;
+        }
+
+        .header-inner {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 0 40px;
+            height: 54px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .site-logo {
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            text-decoration: none;
+            color: var(--text);
+            line-height: 1;
+        }
+
+        .logo-accent {
+            font-weight: 300;
+            color: var(--text-muted);
+            letter-spacing: 1.5px;
+        }
+
+        .main-nav {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .nav-link {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-decoration: none;
+            letter-spacing: 0.02em;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover { color: var(--text); }
+        .nav-link.active { color: var(--accent); }
+
+        /* ── Gallery grid ────────────────────────── */
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            padding: 28px 40px 48px;
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+
+        /* ── Chart card ──────────────────────────── */
+
+        .chart-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: border-color 0.2s;
+        }
+
+        .chart-card:hover { border-color: var(--border-2); }
+
+        .card-header {
+            padding: 22px 26px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .card-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 5px;
+            letter-spacing: -0.01em;
+        }
+
+        .card-total {
+            display: block;
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-top: 1px;
+            letter-spacing: 0.01em;
+        }
+
+        .card-insight {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            max-width: 380px;
+        }
+
+        .card-tag {
+            display: inline-block;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-weight: 600;
+            color: var(--accent);
+            background: var(--accent-dim);
+            border: 1px solid rgba(99,102,241,0.25);
+            border-radius: 3px;
+            padding: 2px 7px;
+            margin-bottom: 6px;
+        }
+
+        .customize-btn {
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 5px 11px;
+            border: 1px solid rgba(99,102,241,0.3);
+            border-radius: 5px;
+            background: var(--accent-dim);
+            color: #a5b4fc;
+            font-size: 0.73rem;
+            font-weight: 500;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: all 0.15s;
+            font-family: inherit;
+        }
+
+        .customize-btn:hover {
+            background: rgba(99,102,241,0.22);
+            border-color: var(--accent);
+            color: #c7d2fe;
+        }
+
+        .card-chart-wrap {
+            padding: 4px 24px 24px;
+            flex: 1;
+        }
+
+        .card-chart-wrap canvas {
+            display: block;
+            width: 100% !important;
+        }
+
+        /* ── Loading / error ─────────────────────── */
+
+        .loading-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 60vh;
+            gap: 12px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .spinner {
+            width: 28px;
+            height: 28px;
+            border: 2px solid var(--border-2);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Divider row (full-width card) ───────── */
+
+        .section-label {
+            grid-column: 1 / -1;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 600;
+            color: var(--text-muted);
+            padding: 8px 0 0;
+            border-top: 1px solid var(--border);
+        }
+
+        /* ── Responsive ──────────────────────────── */
+
+        @media (max-width: 1080px) {
+            .gallery-grid { grid-template-columns: 1fr; }
+            .section-label { grid-column: 1; }
+        }
+
+        @media (max-width: 640px) {
+            .header-inner { padding: 0 20px; }
+            .gallery-grid { padding: 20px 20px 40px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="header-inner">
+            <a href="index.html" class="site-logo">WORKFORCE <span class="logo-accent">data</span></a>
+            <nav class="main-nav">
+                <a href="index.html"   class="nav-link">Builder</a>
+                <a href="gallery.html" class="nav-link active">Gallery</a>
+                <a href="reports.html" class="nav-link">Reports</a>
+            </nav>
+        </div>
+    </header>
+
+    <div id="loadingState" class="loading-state">
+        <div class="spinner"></div>
+        <span>Loading data…</span>
+    </div>
+
+    <div class="gallery-grid" id="gallery" style="display:none;">
+
+        <div class="section-label">Employment</div>
+
+        <!-- Card 1: Biggest Industries -->
+        <div class="chart-card">
+            <div class="card-header">
+                <div>
+                    <div class="card-tag">Industry Snapshot</div>
+                    <div class="card-title">Biggest Employing Industries</div>
+                    <div class="card-insight">The 10 largest sectors by total employment, aggregated to major NAICS groups — showing where most regional jobs actually sit</div>
+                </div>
+                <a href="index.html" class="customize-btn">Customize ↗</a>
+            </div>
+            <div class="card-chart-wrap" style="height: 340px;">
+                <canvas id="chart1"></canvas>
+            </div>
+        </div>
+
+        <!-- Card 2: Most Common Occupations -->
+        <div class="chart-card">
+            <div class="card-header">
+                <div>
+                    <div class="card-tag">Occupation Snapshot</div>
+                    <div class="card-title">Most In-Demand Occupations</div>
+                    <div class="card-insight">The 15 most common occupations by headcount — the jobs that define the day-to-day composition of the regional workforce</div>
+                </div>
+                <a href="index.html" class="customize-btn">Customize ↗</a>
+            </div>
+            <div class="card-chart-wrap" style="height: 460px;">
+                <canvas id="chart2"></canvas>
+            </div>
+        </div>
+
+        <div class="section-label">Wages</div>
+
+        <!-- Card 3: Best-Paid Occupations -->
+        <div class="chart-card">
+            <div class="card-header">
+                <div>
+                    <div class="card-tag">Occupation Wages</div>
+                    <div class="card-title">Best-Paid Occupations</div>
+                    <div class="card-insight">Top 12 occupations ranked by median annual wage — where talent commands the highest market premium in this economy</div>
+                </div>
+                <a href="index.html" class="customize-btn">Customize ↗</a>
+            </div>
+            <div class="card-chart-wrap" style="height: 380px;">
+                <canvas id="chart3"></canvas>
+            </div>
+        </div>
+
+        <!-- Card 4: Wage Gap -->
+        <div class="chart-card">
+            <div class="card-header">
+                <div>
+                    <div class="card-tag">Occupation Wages</div>
+                    <div class="card-title">The Wage Spread</div>
+                    <div class="card-insight">10th vs 90th percentile earnings in the top 8 fields — illustrating income range within each occupation, not just the median</div>
+                </div>
+                <a href="index.html" class="customize-btn">Customize ↗</a>
+            </div>
+            <div class="card-chart-wrap" style="height: 300px;">
+                <canvas id="chart4"></canvas>
+            </div>
+        </div>
+
+        <!-- Card 5: Highest-Paying Industries -->
+        <div class="chart-card">
+            <div class="card-header">
+                <div>
+                    <div class="card-tag">Industry Snapshot</div>
+                    <div class="card-title">Highest-Paying Industries</div>
+                    <div class="card-insight">Average annual wages by major sector — revealing which industries pay workers the most, regardless of how many they employ</div>
+                </div>
+                <a href="index.html" class="customize-btn">Customize ↗</a>
+            </div>
+            <div class="card-chart-wrap" style="height: 300px;">
+                <canvas id="chart5"></canvas>
+            </div>
+        </div>
+
+        <!-- Card 6: Sector Share -->
+        <div class="chart-card">
+            <div class="card-header">
+                <div>
+                    <div class="card-tag">Industry Snapshot</div>
+                    <div class="card-title">Employment Share by Sector</div>
+                    <div class="card-insight">How the regional workforce is distributed across the 10 largest economic sectors — the employment "pie" at a glance</div>
+                </div>
+                <a href="index.html" class="customize-btn">Customize ↗</a>
+            </div>
+            <div class="card-chart-wrap" style="height: 300px;">
+                <canvas id="chart6"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="gallery.js"></script>
+</body>
+</html>

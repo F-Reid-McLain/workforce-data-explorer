@@ -1,0 +1,79 @@
+/* ── Chart area ──────────────────────────────────────────── */
+
+.chart-area {
+    background: #f7f6f3;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 520px;
+}
+
+#chartContainer {
+    width: 100%;
+    position: relative;
+    display: none;
+}
+
+#chartContainer.active { display: block; }
+
+#myChart {
+    max-width: 100%;
+    height: auto !important;
+}
+
+.no-data-message {
+    color: #a1a1aa;
+    font-size: 0.9rem;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 460px;
+    letter-spacing: 0.01em;
+}
+
+.no-data-message.hidden { display: none; }
+
+/* ── Scrollbars ──────────────────────────────────────────── */
+
+.control-panel::-webkit-scrollbar,
+.column-list::-webkit-scrollbar { width: 4px; }
+
+.control-panel::-webkit-scrollbar-track,
+.column-list::-webkit-scrollbar-track { background: transparent; }
+
+.control-panel::-webkit-scrollbar-thumb,
+.column-list::-webkit-scrollbar-thumb {
+    background: var(--border-2);
+    border-radius: 2px;
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+
+@media (max-width: 1024px) {
+    .main-content {
+        grid-template-columns: 1fr;
+    }
+
+    .control-panel {
+        position: static;
+        max-height: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .container { padding: 16px; }
+
+    .chart-type-options { grid-template-columns: 1fr; }
+}
+
+@media print {
+    .control-panel,
+    .btn { display: none; }
+
+    .chart-area { border: none; }
+}

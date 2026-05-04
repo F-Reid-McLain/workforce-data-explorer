@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthcare Industry Report — Workforce Data</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <style>
+        :root {
+            --bg:          #0d0d0f;
+            --surface:     #141416;
+            --surface-2:   #1c1c1f;
+            --border:      #27272a;
+            --border-2:    #3f3f46;
+            --text:        #d4d4d8;
+            --text-muted:  #52525b;
+            --accent:      #6366f1;
+            --accent-dim:  rgba(99,102,241,0.12);
+            --hc:          #34d399;   /* Healthcare green */
+            --hc-dim:      rgba(52,211,153,0.12);
+            --radius:      8px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 14px;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Site header ───────────────────────────── */
+
+        .main-header {
+            background: var(--surface-2);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 300;
+        }
+
+        .header-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 40px;
+            height: 54px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .site-logo {
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            text-decoration: none;
+            color: var(--text);
+        }
+
+        .logo-accent { font-weight: 300; color: var(--text-muted); letter-spacing: 1.5px; }
+
+        .main-nav { display: flex; align-items: center; gap: 2rem; }
+
+        .nav-link {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-decoration: none;
+            letter-spacing: 0.02em;
+            transition: color 0.2s;
+        }
+        .nav-link:hover  { color: var(--text); }
+        .nav-link.active { color: var(--accent); }
+
+        /* ── Report container ──────────────────────── */
+
+        .report {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 40px 72px;
+        }
+
+        /* ── Report cover ──────────────────────────── */
+
+        .report-cover {
+            padding: 48px 0 36px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 40px;
+        }
+
+        .cover-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--hc);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cover-label::before {
+            content: '';
+            display: inline-block;
+            width: 18px;
+            height: 2px;
+            background: var(--hc);
+            border-radius: 1px;
+        }
+
+        .report-cover h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            color: #fff;
+            margin-bottom: 6px;
+            line-height: 1.15;
+        }
+
+        .report-cover .subtitle {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        /* ── Narrative ─────────────────────────────── */
+
+        .narrative {
+            font-size: 1rem;
+            line-height: 1.8;
+            color: var(--text);
+            margin-bottom: 32px;
+            max-width: 780px;
+        }
+
+        .narrative .stat {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        /* ── KPI cards ─────────────────────────────── */
+
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 52px;
+        }
+
+        .kpi-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px 22px 18px;
+        }
+
+        .kpi-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+
+        .kpi-value {
+            font-size: 1.65rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            color: #fff;
+            line-height: 1;
+        }
+
+        .kpi-value.hc { color: var(--hc); }
+
+        .kpi-sub {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        /* ── Report sections ───────────────────────── */
+
+        .report-section {
+            margin-bottom: 56px;
+        }
+
+        .section-heading {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #fff;
+            letter-spacing: -0.01em;
+            margin-bottom: 6px;
+        }
+
+        .section-sub {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+            max-width: 680px;
+            line-height: 1.6;
+        }
+
+        /* ── Chart wrappers ────────────────────────── */
+
+        .chart-wrap {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+        }
+
+        .chart-wrap.split {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            align-items: center;
+        }
+
+        .doughnut-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .legend-item.highlight { color: var(--text); font-weight: 500; }
+
+        .legend-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        /* ── Loading state ─────────────────────────── */
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        /* ── Divider label ─────────────────────────── */
+
+        .wage-divider {
+            width: 100%;
+            text-align: center;
+            font-size: 0.62rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            padding: 6px 0;
+        }
+
+        /* ── Responsive ────────────────────────────── */
+
+        @media (max-width: 768px) {
+            .report { padding: 0 20px 48px; }
+            .header-inner { padding: 0 20px; }
+            .kpi-row { grid-template-columns: repeat(2, 1fr); }
+            .chart-wrap.split { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="header-inner">
+            <a href="../index.html" class="site-logo">WORKFORCE <span class="logo-accent">data</span></a>
+            <nav class="main-nav">
+                <a href="../index.html"   class="nav-link">Builder</a>
+                <a href="../gallery.html" class="nav-link">Gallery</a>
+                <a href="../reports.html" class="nav-link active">Reports</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="report">
+
+        <!-- Cover -->
+        <div class="report-cover">
+            <div class="cover-label">Industry Report · NAICS 62</div>
+            <h1>Health Care &amp; Social Assistance</h1>
+            <p class="subtitle">Macon-Bibb County Workforce Analysis</p>
+        </div>
+
+        <!-- Narrative -->
+        <p class="narrative" id="narrative">
+            Loading workforce data&hellip;
+        </p>
+
+        <!-- KPI cards -->
+        <div class="kpi-row">
+            <div class="kpi-card">
+                <div class="kpi-label">Total Employed</div>
+                <div class="kpi-value hc" id="kpi-empl">—</div>
+                <div class="kpi-sub">healthcare workers</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Share of Job Market</div>
+                <div class="kpi-value hc" id="kpi-share">—</div>
+                <div class="kpi-sub">of all local employment</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Average Annual Wage</div>
+                <div class="kpi-value" id="kpi-wage">—</div>
+                <div class="kpi-sub">across all sub-sectors</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Projected Annual Openings</div>
+                <div class="kpi-value" id="kpi-demand">—</div>
+                <div class="kpi-sub">total demand openings</div>
+            </div>
+        </div>
+
+        <!-- Doughnut -->
+        <div class="report-section">
+            <h2 class="section-heading">Healthcare's Share of the Local Economy</h2>
+            <p class="section-sub">Employment distribution across all major industry sectors. Healthcare is shown in green; all other sectors are represented in muted tones.</p>
+            <div class="chart-wrap split">
+                <div style="position:relative; height:340px;">
+                    <canvas id="doughnutChart"></canvas>
+                </div>
+                <div class="doughnut-legend" id="doughnutLegend">
+                    <div class="loading">Loading…</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Employment breakdown -->
+        <div class="report-section">
+            <h2 class="section-heading">Breakdown by Employer Type</h2>
+            <p class="section-sub">Top 20 healthcare sub-sectors by total employment. Includes all six-digit NAICS codes within Health Care &amp; Social Assistance.</p>
+            <div class="chart-wrap">
+                <div style="position:relative;">
+                    <canvas id="emplChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Wage spread -->
+        <div class="report-section">
+            <h2 class="section-heading">Highest &amp; Lowest Paying Sub-Sectors</h2>
+            <p class="section-sub">Top 10 highest-paying and bottom 10 lowest-paying healthcare employer types by average annual wage.</p>
+            <div class="chart-wrap">
+                <div style="position:relative;">
+                    <canvas id="wageChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Demand -->
+        <div class="report-section">
+            <h2 class="section-heading">Sub-Sectors with the Highest Labor Demand</h2>
+            <p class="section-sub">Projected annual job openings (new positions + replacement demand) for the top 15 healthcare sub-sectors by total demand.</p>
+            <div class="chart-wrap">
+                <div style="position:relative;">
+                    <canvas id="demandChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+    // ── Helpers ─────────────────────────────────────────────────
+
+    const HC_GREEN  = '#34d399';
+    const HC_DIM    = 'rgba(52,211,153,0.18)';
+    const TOP_COLOR = '#34d399';
+    const BOT_COLOR = '#f59e0b';
+    const MUTED     = '#2c2c34';
+
+    const C = {
+        bg:   '#141416',
+        text: '#d4d4d8',
+        muted:'#52525b',
+        grid: '#27272a',
+        font: "'Inter', system-ui, sans-serif",
+    };
+
+    Chart.defaults.color       = C.muted;
+    Chart.defaults.font.family = C.font;
+    Chart.defaults.font.size   = 11;
+
+    const bgPlugin = {
+        id: 'bg',
+        beforeDraw(chart) {
+            const ctx = chart.canvas.getContext('2d');
+            ctx.save();
+            ctx.fillStyle = C.bg;
+            ctx.fillRect(0, 0, chart.width, chart.height);
+            ctx.restore();
+        }
+    };
+
+    function parseCSV(text) {
+        const lines   = text.trim().split('\n');
+        const headers = parseCSVLine(lines[0]);
+        const rows    = [];
+        for (let i = 1; i < lines.length; i++) {
+            if (!lines[i].trim()) continue;
+            const fields = parseCSVLine(lines[i]);
+            const obj    = {};
+            headers.forEach((h, j) => { obj[h] = (fields[j] || '').trim(); });
+            rows.push(obj);
+        }
+        return { headers, rows };
+    }
+
+    function parseCSVLine(line) {
+        const result = [];
+        let cur = '', inQ = false;
+        for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            if (ch === '"') { if (inQ && line[i+1] === '"') { cur += '"'; i++; } else inQ = !inQ; }
+            else if (ch === ',' && !inQ) { result.push(cur.trim()); cur = ''; }
+            else cur += ch;
+        }
+        result.push(cur.trim());
+        return result;
+    }
+
+    function toNum(v) { const n = parseFloat(v); return isNaN(n) ? 0 : n; }
+
+    function fmtNum(n) {
+        if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+        if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+        return Math.round(n).toLocaleString();
+    }
+
+    function fmtDollar(n) {
+        if (n >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'M';
+        if (n >= 1e3) return '$' + Math.round(n / 1e3) + 'K';
+        return '$' + Math.round(n).toLocaleString();
+    }
+
+    function ordinal(n) {
+        const s = ['th','st','nd','rd'], v = n % 100;
+        return n + (s[(v - 20) % 10] || s[v] || s[0]);
+    }
+
+    function truncate(str, len) {
+        return str && str.length > len ? str.slice(0, len - 1) + '…' : str;
+    }
+
+    // ── NAICS helpers ────────────────────────────────────────────
+
+    const NAICS_NAMES = {
+        '11':'Agriculture',       '21':'Mining & Oil/Gas',
+        '22':'Utilities',         '23':'Construction',
+        '31':'Manufacturing',     '32':'Manufacturing',     '33':'Manufacturing',
+        '42':'Wholesale Trade',
+        '44':'Retail Trade',      '45':'Retail Trade',
+        '48':'Transportation',    '49':'Transportation',
+        '51':'Information',       '52':'Finance & Insurance',
+        '53':'Real Estate',       '54':'Professional Services',
+        '55':'Management',        '56':'Admin Services',
+        '61':'Education',         '62':'Health Care',
+        '71':'Arts & Recreation', '72':'Hospitality',
+        '81':'Other Services',    '92':'Public Admin',
+    };
+
+    const NAICS_MERGE = { '32':'31', '33':'31', '45':'44', '49':'48' };
+
+    // ── Main ─────────────────────────────────────────────────────
+
+    async function init() {
+        const resp = await fetch('../Data/processed/Industry_Snapshot.csv');
+        if (!resp.ok) { document.getElementById('narrative').textContent = 'Error loading data.'; return; }
+        const { rows } = parseCSV(await resp.text());
+
+        // Total row
+        const totalRow = rows.find(r => (r['NAICS'] || '').trim() === '');
+        const totalEmpl = toNum(totalRow?.['Empl']);
+
+        // Healthcare rows (NAICS starts with '62')
+        const hcRows = rows.filter(r => (r['NAICS'] || '').startsWith('62'));
+
+        // ── KPI calculations ─────────────────────────────────────
+
+        const hcEmpl    = hcRows.reduce((s, r) => s + toNum(r['Empl']), 0);
+        const hcDemand  = hcRows.reduce((s, r) => s + toNum(r['Total Demand']), 0);
+        const hcWageNum = hcRows.reduce((s, r) => s + toNum(r['Avg Ann Wages']) * toNum(r['Empl']), 0);
+        const hcWageDen = hcRows.reduce((s, r) => s + toNum(r['Empl']), 0);
+        const hcAvgWage = hcWageDen > 0 ? hcWageNum / hcWageDen : 0;
+        const hcShare   = totalEmpl > 0 ? (hcEmpl / totalEmpl) * 100 : 0;
+
+        // Sector rank (aggregate all 2-digit sectors)
+        const sectorMap = new Map();
+        rows.filter(r => (r['NAICS'] || '').trim() !== '').forEach(r => {
+            const raw  = (r['NAICS'] || '').slice(0, 2);
+            const code = NAICS_MERGE[raw] || raw;
+            sectorMap.set(code, (sectorMap.get(code) || 0) + toNum(r['Empl']));
+        });
+        const sectorsSorted = [...sectorMap.entries()].sort((a, b) => b[1] - a[1]);
+        const hcRank = sectorsSorted.findIndex(([c]) => c === '62') + 1;
+
+        // ── Narrative ─────────────────────────────────────────────
+
+        document.getElementById('narrative').innerHTML =
+            `Health Care &amp; Social Assistance makes up about <span class="stat">${hcShare.toFixed(1)}%</span> ` +
+            `of Macon-Bibb's job market, making it the <span class="stat">${ordinal(hcRank)} largest industry</span> ` +
+            `in the region. Approximately <span class="stat">${fmtNum(hcEmpl)} people</span> work in healthcare, ` +
+            `with an average annual wage of <span class="stat">${fmtDollar(Math.round(hcAvgWage))}</span> across all sub-sectors.`;
+
+        // ── KPI cards ─────────────────────────────────────────────
+
+        document.getElementById('kpi-empl').textContent   = fmtNum(hcEmpl);
+        document.getElementById('kpi-share').textContent  = hcShare.toFixed(1) + '%';
+        document.getElementById('kpi-wage').textContent   = fmtDollar(Math.round(hcAvgWage));
+        document.getElementById('kpi-demand').textContent = fmtNum(hcDemand);
+
+        buildDoughnut(sectorsSorted);
+        buildEmplChart(hcRows);
+        buildWageChart(hcRows);
+        buildDemandChart(hcRows);
+    }
+
+    // ── Doughnut ─────────────────────────────────────────────────
+
+    function buildDoughnut(sectorsSorted) {
+        const labels = sectorsSorted.map(([c]) => NAICS_NAMES[c] || c);
+        const data   = sectorsSorted.map(([, v]) => v);
+        const total  = data.reduce((a, b) => a + b, 0);
+        const colors = sectorsSorted.map(([c]) =>
+            c === '62' ? HC_GREEN : `hsl(240, 6%, ${16 + sectorsSorted.indexOf(sectorsSorted.find(s => s[0] === c)) * 0.4}%)`
+        );
+
+        // Legend
+        const legendEl = document.getElementById('doughnutLegend');
+        legendEl.innerHTML = sectorsSorted.map(([c, v], i) => {
+            const isHC  = c === '62';
+            const pct   = ((v / total) * 100).toFixed(1);
+            const name  = NAICS_NAMES[c] || c;
+            return `<div class="legend-item ${isHC ? 'highlight' : ''}">
+                <span class="legend-dot" style="background:${colors[i]}"></span>
+                <span>${name}</span>
+                <span style="margin-left:auto;color:${isHC ? HC_GREEN : 'var(--text-muted)'}">${pct}%</span>
+            </div>`;
+        }).join('');
+
+        new Chart(document.getElementById('doughnutChart'), {
+            type: 'doughnut',
+            data: {
+                labels,
+                datasets: [{ data, backgroundColor: colors, borderColor: '#0d0d0f', borderWidth: 2, hoverBorderWidth: 2 }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '60%',
+                plugins: {
+                    legend:     { display: false },
+                    tooltip:    { callbacks: { label: ctx => `  ${fmtNum(ctx.raw)}  (${((ctx.raw/total)*100).toFixed(1)}%)` } },
+                    datalabels: {
+                        display: ctx => (ctx.dataset.data[ctx.dataIndex] / total * 100) >= 5,
+                        formatter: (v, ctx) => ctx.chart.data.labels[ctx.dataIndex] === 'Health Care' ? 'Health Care\n' + ((v/total)*100).toFixed(1) + '%' : ((v/total)*100).toFixed(0) + '%',
+                        color: ctx => ctx.chart.data.labels[ctx.dataIndex] === 'Health Care' ? '#fff' : 'rgba(255,255,255,0.45)',
+                        font: { size: 10, weight: '600' },
+                        textAlign: 'center',
+                    }
+                }
+            },
+            plugins: [bgPlugin, ChartDataLabels]
+        });
+    }
+
+    // ── Employment breakdown ──────────────────────────────────────
+
+    function buildEmplChart(hcRows) {
+        const sorted = [...hcRows]
+            .filter(r => toNum(r['Empl']) > 0)
+            .sort((a, b) => toNum(b['Empl']) - toNum(a['Empl']))
+            .slice(0, 20);
+
+        const labels = sorted.map(r => truncate(r['Industry'], 42));
+        const data   = sorted.map(r => toNum(r['Empl']));
+        const colors = sorted.map((_, i) => {
+            const t = i / (sorted.length - 1);
+            return `rgba(52, 211, 153, ${0.85 - t * 0.45})`;
+        });
+
+        const canvas = document.getElementById('emplChart');
+        canvas.height = Math.max(380, sorted.length * 30 + 60);
+
+        new Chart(canvas, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{ data, backgroundColor: colors, borderWidth: 0, barPercentage: 0.72, categoryPercentage: 1 }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: { padding: { right: 58, top: 4, bottom: 4 } },
+                plugins: {
+                    legend:     { display: false },
+                    tooltip:    { callbacks: { label: ctx => '  ' + fmtNum(ctx.raw) + ' workers' } },
+                    datalabels: {
+                        anchor: 'end', align: 'right', clamp: false, clip: false,
+                        color: C.muted, font: { size: 10, weight: '500' },
+                        formatter: fmtNum
+                    }
+                },
+                scales: {
+                    y: { grid: { display: false }, border: { display: false }, ticks: { color: C.text, font: { size: 11 } } },
+                    x: { display: false }
+                }
+            },
+            plugins: [bgPlugin, ChartDataLabels]
+        });
+    }
+
+    // ── Wage chart (top 10 + bottom 10) ──────────────────────────
+
+    function buildWageChart(hcRows) {
+        const withWages = [...hcRows]
+            .filter(r => toNum(r['Avg Ann Wages']) > 0 && toNum(r['Empl']) > 0)
+            .sort((a, b) => toNum(b['Avg Ann Wages']) - toNum(a['Avg Ann Wages']));
+
+        const top10 = withWages.slice(0, 10);
+        const bot10 = [...withWages].reverse().slice(0, 10).reverse();
+
+        // Combine: top10 (desc) then bot10 (asc by wage) with a spacer
+        const combined = [...top10, ...bot10];
+        const labels   = combined.map(r => truncate(r['Industry'], 42));
+        const data     = combined.map(r => toNum(r['Avg Ann Wages']));
+        const colors   = combined.map((_, i) => i < 10 ? 'rgba(52,211,153,0.8)' : 'rgba(245,158,11,0.8)');
+
+        const canvas = document.getElementById('wageChart');
+        canvas.height = combined.length * 30 + 80;
+
+        new Chart(canvas, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{ data, backgroundColor: colors, borderWidth: 0, barPercentage: 0.72, categoryPercentage: 1 }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: { padding: { right: 68, top: 4, bottom: 4 } },
+                plugins: {
+                    legend:     { display: false },
+                    tooltip:    { callbacks: { label: ctx => '  Avg. ' + fmtDollar(ctx.raw) + ' / year' } },
+                    datalabels: {
+                        anchor: 'end', align: 'right', clamp: false, clip: false,
+                        color: (ctx) => ctx.dataIndex < 10 ? HC_GREEN : '#f59e0b',
+                        font: { size: 10, weight: '600' },
+                        formatter: fmtDollar
+                    }
+                },
+                scales: {
+                    y: { grid: { display: false }, border: { display: false }, ticks: { color: C.text, font: { size: 11 } } },
+                    x: { display: false }
+                }
+            },
+            plugins: [bgPlugin, ChartDataLabels]
+        });
+
+        // Inject divider label between the two groups
+        // Done via post-render annotation note in section-sub
+        const wrap = document.getElementById('wageChart').closest('.chart-wrap');
+        const note = document.createElement('div');
+        note.style.cssText = 'display:flex;align-items:center;gap:12px;padding:8px 0 0;';
+        note.innerHTML =
+            `<span style="display:flex;align-items:center;gap:6px;font-size:0.72rem;color:${HC_GREEN}">` +
+            `<span style="width:10px;height:10px;border-radius:2px;background:rgba(52,211,153,0.8);display:inline-block"></span>Top 10 Highest Paying</span>` +
+            `<span style="display:flex;align-items:center;gap:6px;font-size:0.72rem;color:#f59e0b;margin-left:16px">` +
+            `<span style="width:10px;height:10px;border-radius:2px;background:rgba(245,158,11,0.8);display:inline-block"></span>Bottom 10 Lowest Paying</span>`;
+        wrap.appendChild(note);
+    }
+
+    // ── Demand chart ──────────────────────────────────────────────
+
+    function buildDemandChart(hcRows) {
+        const sorted = [...hcRows]
+            .filter(r => toNum(r['Total Demand']) > 0)
+            .sort((a, b) => toNum(b['Total Demand']) - toNum(a['Total Demand']))
+            .slice(0, 15);
+
+        const labels = sorted.map(r => truncate(r['Industry'], 42));
+        const data   = sorted.map(r => toNum(r['Total Demand']));
+        const colors = sorted.map((_, i) => {
+            const t = i / (sorted.length - 1);
+            return `rgba(99, 102, 241, ${0.85 - t * 0.4})`;
+        });
+
+        const canvas = document.getElementById('demandChart');
+        canvas.height = Math.max(300, sorted.length * 30 + 60);
+
+        new Chart(canvas, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{ data, backgroundColor: colors, borderWidth: 0, barPercentage: 0.72, categoryPercentage: 1 }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: { padding: { right: 48, top: 4, bottom: 4 } },
+                plugins: {
+                    legend:     { display: false },
+                    tooltip:    { callbacks: { label: ctx => '  ' + fmtNum(ctx.raw) + ' projected openings' } },
+                    datalabels: {
+                        anchor: 'end', align: 'right', clamp: false, clip: false,
+                        color: C.muted, font: { size: 10, weight: '500' },
+                        formatter: fmtNum
+                    }
+                },
+                scales: {
+                    y: { grid: { display: false }, border: { display: false }, ticks: { color: C.text, font: { size: 11 } } },
+                    x: { display: false }
+                }
+            },
+            plugins: [bgPlugin, ChartDataLabels]
+        });
+    }
+
+    // ── Boot ──────────────────────────────────────────────────────
+
+    document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

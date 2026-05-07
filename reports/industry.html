@@ -130,6 +130,35 @@
             color: var(--text-muted);
         }
 
+        .cover-actions {
+            margin-top: 20px;
+        }
+
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 16px;
+            background: var(--ind-dim);
+            color: var(--ind);
+            border: 1px solid var(--ind);
+            border-radius: var(--radius);
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            text-decoration: none;
+            transition: background 0.15s, opacity 0.15s;
+        }
+
+        .download-btn:hover {
+            background: rgba(var(--ind-rgb, 52,211,153), 0.22);
+            opacity: 0.9;
+        }
+
+        .download-btn svg {
+            flex-shrink: 0;
+        }
+
         /* ── Narrative ─────────────────────────────── */
 
         .narrative {
@@ -328,6 +357,16 @@
             <div class="cover-label" id="coverLabel">Industry Report</div>
             <h1 id="coverTitle">Loading…</h1>
             <p class="subtitle">Macon-Bibb County Workforce Analysis</p>
+            <div class="cover-actions">
+                <a id="pdfDownloadLink" class="download-btn" href="#" download>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    Download PDF
+                </a>
+            </div>
         </div>
 
         <p class="narrative" id="narrative">Loading workforce data…</p>
@@ -546,6 +585,9 @@
         document.title = `${config.name} — Workforce Data`;
         document.getElementById('coverLabel').textContent = `Industry Report · ${config.naicsLabel}`;
         document.getElementById('coverTitle').textContent = config.name;
+        const pdfLink = document.getElementById('pdfDownloadLink');
+        pdfLink.href     = `pdf/${id}.pdf`;
+        pdfLink.download = `${config.name} — Workforce Report.pdf`;
 
         // Load data
         let rows;

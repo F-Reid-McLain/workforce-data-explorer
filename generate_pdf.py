@@ -15,6 +15,7 @@ Setup (one-time):
 """
 
 import asyncio
+import base64
 import csv
 import json
 import sys
@@ -47,6 +48,28 @@ INDUSTRIES = {
 }
 
 NAICS_MERGE = {'32': '31', '33': '31', '45': '44', '49': '48'}
+
+SECTOR_MUTED_COLORS = {
+    '11': 'hsl(125,28%,62%)',  # sage          — Agriculture
+    '21': 'hsl(42,30%,62%)',   # wheat         — Mining
+    '22': 'hsl(188,28%,60%)',  # teal          — Utilities
+    '23': 'hsl(28,32%,62%)',   # tan           — Construction
+    '31': 'hsl(215,28%,62%)',  # steel blue    — Manufacturing
+    '42': 'hsl(72,26%,60%)',   # olive         — Wholesale
+    '44': 'hsl(345,26%,66%)',  # dusty rose    — Retail
+    '48': 'hsl(18,28%,62%)',   # sienna        — Transportation
+    '51': 'hsl(268,26%,64%)',  # soft purple   — Information
+    '52': 'hsl(202,30%,62%)',  # sky blue      — Finance
+    '53': 'hsl(155,26%,62%)',  # seafoam       — Real Estate
+    '54': 'hsl(248,26%,65%)',  # lavender      — Professional
+    '55': 'hsl(218,18%,62%)',  # slate         — Management
+    '56': 'hsl(48,28%,62%)',   # muted gold    — Admin Services
+    '61': 'hsl(92,26%,62%)',   # lime          — Education
+    '71': 'hsl(298,20%,64%)',  # mauve         — Arts
+    '72': 'hsl(22,30%,64%)',   # coral         — Hospitality
+    '81': 'hsl(205,18%,64%)',  # blue-grey     — Other Services
+    '92': 'hsl(235,26%,64%)',  # periwinkle    — Public Admin
+}
 
 NAICS_NAMES = {
     '11': 'Agriculture',       '21': 'Mining & Oil/Gas',
@@ -101,6 +124,11 @@ def hex_to_rgb(h):
 def load_csv(path):
     with open(path, newline='', encoding='utf-8-sig') as f:
         return list(csv.DictReader(f))
+
+def logo_data_uri():
+    logo_path = Path(__file__).parent / 'Resources' / '32_greatermacon_531X354.webp'
+    data = base64.b64encode(logo_path.read_bytes()).decode('ascii')
+    return f'data:image/webp;base64,{data}'
 
 # ── Data processing ────────────────────────────────────────────────────────
 
@@ -164,10 +192,8 @@ def process(industry_id, rows):
     for i, (c, _) in enumerate(sectors_sorted):
         if c == canonical_id:
             d_colors.append(config['color'])
-        elif c == 'other':
-            d_colors.append('#d1d5db')
         else:
-            d_colors.append(f'hsl(220,8%,{82 - i * 0.4:.1f}%)')
+            d_colors.append('hsl(220,8%,74%)')
 
     return dict(
         config=config,
@@ -257,6 +283,8 @@ def build_html(industry_id, rows):
                         for x in d['demand_rows']],
     }, ensure_ascii=False).replace('</', '<\\/')
 
+    logo_uri = logo_data_uri()
+
     # Build the complete HTML document
     # Note: curly braces that belong to CSS/JS are doubled ({{ }}) because this is an f-string
     return f"""<!DOCTYPE html>
@@ -270,7 +298,9 @@ def build_html(industry_id, rows):
 @page {{ size: letter portrait; margin: 0.65in 0.7in; }}
 * {{ margin:0; padding:0; box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact; }}
 body {{ font-family:-apple-system,'Helvetica Neue',Arial,sans-serif; font-size:10pt; color:#1f2937; background:#fff; line-height:1.5; }}
-.cover {{ padding-bottom:16pt; border-bottom:1.5pt solid #e5e7eb; margin-bottom:18pt; }}
+.cover {{ display:flex; justify-content:space-between; align-items:flex-start; padding-bottom:16pt; border-bottom:1.5pt solid #e5e7eb; margin-bottom:18pt; }}
+.cover-text {{ flex:1; }}
+.cover-logo img {{ height:56pt; width:auto; display:block; }}
 .clabel {{ font-size:7pt; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:{acc}; margin-bottom:8pt; display:flex; align-items:center; gap:6pt; }}
 .clabel::before {{ content:''; display:inline-block; width:14pt; height:1.5pt; background:{acc}; border-radius:1pt; }}
 .cover h1 {{ font-size:24pt; font-weight:700; color:#111827; letter-spacing:-.03em; line-height:1.1; margin-bottom:4pt; }}
@@ -289,21 +319,24 @@ body {{ font-family:-apple-system,'Helvetica Neue',Arial,sans-serif; font-size:1
 .cbox {{ background:#f9fafb; border:.5pt solid #e5e7eb; border-radius:5pt; padding:12pt; overflow:hidden; }}
 .dw {{ display:flex; gap:18pt; align-items:flex-start; }}
 .dc {{ flex-shrink:0; }}
-.dl {{ flex:1; display:grid; grid-template-columns:1fr 1fr; gap:2.5pt 8pt; align-content:start; padding-top:8pt; }}
-.li {{ display:flex; align-items:center; gap:5pt; }}
+.dl {{ flex:1; display:flex; flex-direction:column; gap:4pt; align-content:start; padding-top:8pt; }}
+.li {{ display:flex; align-items:center; gap:6pt; }}
 .li.hl .ln {{ color:#111827; font-weight:600; }}
-.dot {{ width:7pt; height:7pt; border-radius:50%; flex-shrink:0; }}
-.ln {{ font-size:7pt; color:#6b7280; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }}
-.lp {{ font-size:7pt; font-weight:600; white-space:nowrap; }}
+.dot {{ width:9pt; height:9pt; border-radius:50%; flex-shrink:0; }}
+.ln {{ font-size:9pt; color:#6b7280; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }}
+.lp {{ font-size:9pt; font-weight:600; white-space:nowrap; }}
 canvas {{ display:block; }}
 </style>
 </head>
 <body>
 
 <div class="cover">
-  <div class="clabel">{config['naicsLabel']} · Industry Report</div>
-  <h1>{config['name']}</h1>
-  <p class="sub">Macon-Bibb County Workforce Analysis</p>
+  <div class="cover-text">
+    <div class="clabel">{config['naicsLabel']} · Industry Report</div>
+    <h1>{config['name']}</h1>
+    <p class="sub">Macon-Bibb County Workforce Analysis</p>
+  </div>
+  <div class="cover-logo"><img src="{logo_uri}" alt="Greater Macon Chamber of Commerce"></div>
 </div>
 
 <p class="narrative">{narrative}</p>
@@ -336,7 +369,7 @@ canvas {{ display:block; }}
   <p class="ssub">Employment distribution across all major sectors. {d['short_name']} is highlighted.</p>
   <div class="cbox">
     <div class="dw">
-      <div class="dc"><canvas id="cd" width="240" height="240"></canvas></div>
+      <div class="dc"><canvas id="cd" width="420" height="420"></canvas></div>
       <div class="dl">{legend_html}</div>
     </div>
   </div>
@@ -366,23 +399,31 @@ function fade(hex, a) {{ var rv=parseInt(hex.slice(1,3),16), gv=parseInt(hex.sli
         datasets: [{{ data: D.sectors_sorted.map(function(x) {{ return x[1]; }}), backgroundColor: D.d_colors, borderColor: '#fff', borderWidth: 2 }}]
       }},
       options: {{
-        responsive: false, maintainAspectRatio: true, cutout: '60%',
+        animation: false, responsive: false, maintainAspectRatio: true, cutout: '60%',
         plugins: {{
           legend: {{ display: false }},
           tooltip: {{ enabled: false }},
           datalabels: {{
-            display: function(ctx) {{ return ctx.dataset.data[ctx.dataIndex] / st * 100 >= 5; }},
+            display: true,
+            clamp: false,
+            clip: false,
             formatter: function(v, ctx) {{
-              var pct = ((v / st) * 100).toFixed(0) + '%';
-              var clr = ctx.chart.data.datasets[0].backgroundColor[ctx.dataIndex];
-              var lbl = ctx.chart.data.labels[ctx.dataIndex];
-              var name = D.naics_names[lbl] || lbl;
-              return clr === acc ? name + '\\n' + pct : pct;
+              var share = (v / st) * 100;
+              var pct   = share.toFixed(1) + '%';
+              var clr   = ctx.chart.data.datasets[0].backgroundColor[ctx.dataIndex];
+              var lbl   = ctx.chart.data.labels[ctx.dataIndex];
+              var name  = D.naics_names[lbl] || lbl;
+              if (clr === acc) return name + '\\n' + pct;
+              if (share >= 5)  return name + '\\n' + pct;
+              return pct;
             }},
             color: function(ctx) {{
-              return ctx.chart.data.datasets[0].backgroundColor[ctx.dataIndex] === acc ? '#fff' : 'rgba(0,0,0,0.3)';
+              return ctx.chart.data.datasets[0].backgroundColor[ctx.dataIndex] === acc ? '#fff' : '#1f2937';
             }},
-            font: {{ size: 9, weight: '600' }},
+            font: function(ctx) {{
+              var share = ctx.dataset.data[ctx.dataIndex] / st * 100;
+              return {{ size: share >= 5 ? 10 : 8.5, weight: '600' }};
+            }},
             textAlign: 'center'
           }}
         }}
@@ -397,7 +438,7 @@ function fade(hex, a) {{ var rv=parseInt(hex.slice(1,3),16), gv=parseInt(hex.sli
       new Chart(ceEl, {{
         type: 'bar',
         data: {{ labels: D.empl_rows.map(function(x) {{ return trunc(x.Industry, 44); }}), datasets: [{{ data: D.empl_rows.map(function(x) {{ return toNum(x.Empl); }}), backgroundColor: ec, borderWidth: 0, barPercentage: 0.72, categoryPercentage: 1 }}] }},
-        options: {{ indexAxis: 'y', responsive: false, maintainAspectRatio: false, layout: {{ padding: {{ right: 58, top: 4, bottom: 4 }} }}, plugins: {{ legend: {{ display: false }}, tooltip: {{ enabled: false }}, datalabels: {{ anchor: 'end', align: 'right', clamp: false, clip: false, color: '#9ca3af', font: {{ size: 9, weight: '500' }}, formatter: fmtNum }} }}, scales: {{ y: {{ grid: {{ display: false }}, border: {{ display: false }}, ticks: {{ color: '#374151', font: {{ size: 9 }} }} }}, x: {{ display: false }} }} }},
+        options: {{ indexAxis: 'y', animation: false, responsive: false, maintainAspectRatio: false, layout: {{ padding: {{ right: 58, top: 4, bottom: 4 }} }}, plugins: {{ legend: {{ display: false }}, tooltip: {{ enabled: false }}, datalabels: {{ anchor: 'end', align: 'right', clamp: false, clip: false, color: '#9ca3af', font: {{ size: 9, weight: '500' }}, formatter: fmtNum }} }}, scales: {{ y: {{ grid: {{ display: false }}, border: {{ display: false }}, ticks: {{ color: '#374151', font: {{ size: 9 }} }} }}, x: {{ display: false }} }} }},
         plugins: [ChartDataLabels]
       }});
     }}
@@ -409,7 +450,7 @@ function fade(hex, a) {{ var rv=parseInt(hex.slice(1,3),16), gv=parseInt(hex.sli
       new Chart(cwEl, {{
         type: 'bar',
         data: {{ labels: D.wage_rows.map(function(x) {{ return trunc(x.Industry, 44); }}), datasets: [{{ data: D.wage_rows.map(function(x) {{ return toNum(x['Avg Ann Wages']); }}), backgroundColor: wc, borderWidth: 0, barPercentage: 0.72, categoryPercentage: 1 }}] }},
-        options: {{ indexAxis: 'y', responsive: false, maintainAspectRatio: false, layout: {{ padding: {{ right: 68, top: 4, bottom: 4 }} }}, plugins: {{ legend: {{ display: false }}, tooltip: {{ enabled: false }}, datalabels: {{ anchor: 'end', align: 'right', clamp: false, clip: false, color: function(ctx) {{ return ctx.dataIndex < D.wage_top_len ? acc : '#f59e0b'; }}, font: {{ size: 9, weight: '600' }}, formatter: fmtDollar }} }}, scales: {{ y: {{ grid: {{ display: false }}, border: {{ display: false }}, ticks: {{ color: '#374151', font: {{ size: 9 }} }} }}, x: {{ display: false }} }} }},
+        options: {{ indexAxis: 'y', animation: false, responsive: false, maintainAspectRatio: false, layout: {{ padding: {{ right: 68, top: 4, bottom: 4 }} }}, plugins: {{ legend: {{ display: false }}, tooltip: {{ enabled: false }}, datalabels: {{ anchor: 'end', align: 'right', clamp: false, clip: false, color: function(ctx) {{ return ctx.dataIndex < D.wage_top_len ? acc : '#f59e0b'; }}, font: {{ size: 9, weight: '600' }}, formatter: fmtDollar }} }}, scales: {{ y: {{ grid: {{ display: false }}, border: {{ display: false }}, ticks: {{ color: '#374151', font: {{ size: 9 }} }} }}, x: {{ display: false }} }} }},
         plugins: [ChartDataLabels]
       }});
     }}
@@ -421,7 +462,7 @@ function fade(hex, a) {{ var rv=parseInt(hex.slice(1,3),16), gv=parseInt(hex.sli
       new Chart(cd2El, {{
         type: 'bar',
         data: {{ labels: D.demand_rows.map(function(x) {{ return trunc(x.Industry, 44); }}), datasets: [{{ data: D.demand_rows.map(function(x) {{ return toNum(x['Total Demand']); }}), backgroundColor: dc, borderWidth: 0, barPercentage: 0.72, categoryPercentage: 1 }}] }},
-        options: {{ indexAxis: 'y', responsive: false, maintainAspectRatio: false, layout: {{ padding: {{ right: 48, top: 4, bottom: 4 }} }}, plugins: {{ legend: {{ display: false }}, tooltip: {{ enabled: false }}, datalabels: {{ anchor: 'end', align: 'right', clamp: false, clip: false, color: '#9ca3af', font: {{ size: 9, weight: '500' }}, formatter: fmtNum }} }}, scales: {{ y: {{ grid: {{ display: false }}, border: {{ display: false }}, ticks: {{ color: '#374151', font: {{ size: 9 }} }} }}, x: {{ display: false }} }} }},
+        options: {{ indexAxis: 'y', animation: false, responsive: false, maintainAspectRatio: false, layout: {{ padding: {{ right: 48, top: 4, bottom: 4 }} }}, plugins: {{ legend: {{ display: false }}, tooltip: {{ enabled: false }}, datalabels: {{ anchor: 'end', align: 'right', clamp: false, clip: false, color: '#9ca3af', font: {{ size: 9, weight: '500' }}, formatter: fmtNum }} }}, scales: {{ y: {{ grid: {{ display: false }}, border: {{ display: false }}, ticks: {{ color: '#374151', font: {{ size: 9 }} }} }}, x: {{ display: false }} }} }},
         plugins: [ChartDataLabels]
       }});
     }}
@@ -455,7 +496,20 @@ async def render_pdf(html, output_path):
                 if errors:
                     raise RuntimeError('JS errors: ' + '; '.join(errors))
                 raise
-            await page.pdf(path=str(output_path), format='Letter', print_background=True)
+            await page.pdf(
+                path=str(output_path),
+                format='Letter',
+                print_background=True,
+                display_header_footer=True,
+                header_template='<span></span>',
+                footer_template='''<div style="width:100%;font-size:7pt;color:#9ca3af;font-family:-apple-system,Arial,sans-serif;
+                    display:flex;justify-content:space-between;align-items:center;
+                    border-top:0.5pt solid #e5e7eb;padding-top:3pt;margin:0 0.7in;box-sizing:border-box;">
+                    <span>Source: JobsEQ, Q3 2025 &nbsp;·&nbsp; Macon-Bibb County, GA</span>
+                    <span>Page <span class="pageNumber"></span> of <span class="totalPages"></span></span>
+                </div>''',
+                margin={'top': '0.65in', 'bottom': '0.65in', 'left': '0.7in', 'right': '0.7in'},
+            )
             await browser.close()
     finally:
         tmp_path.unlink(missing_ok=True)

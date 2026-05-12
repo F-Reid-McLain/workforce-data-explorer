@@ -160,7 +160,7 @@
 
         .kpi-row {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(5, 1fr);
             gap: 10px;
             margin-bottom: 36px;
         }
@@ -505,7 +505,7 @@
         @media (max-width: 900px) {
             .report { padding: 0 20px 48px; }
             .header-inner { padding: 0 20px; }
-            .kpi-row { grid-template-columns: repeat(2, 1fr); }
+            .kpi-row { grid-template-columns: repeat(3, 1fr); }
             .chart-grid-2, .chart-grid-4, .chart-wrap.split { grid-template-columns: 1fr; }
         }
     </style>
@@ -566,11 +566,16 @@
                 <div class="kpi-value" id="kpi-demand">—</div>
                 <div class="kpi-sub">total demand openings</div>
             </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Economic Impact Score</div>
+                <div class="kpi-value" id="kpi-eii">—</div>
+                <div class="kpi-sub">wage &amp; growth vs. regional baseline</div>
+            </div>
         </div>
 
         <!-- Industry Profile (radar) -->
         <div style="margin-bottom:20px;">
-            <div class="panel-title">Industry Profile <i class="info-icon">i<span class="info-tip">Percentile rank across 5 workforce dimensions compared to all other local industries. 100th = highest-ranked; 0th = lowest. Computed from regional data only.</span></i></div>
+            <div class="panel-title">Industry Profile <i class="info-icon">i<span class="info-tip">Percentile rank across 5 workforce dimensions vs. all local industries. Economic Impact = wage bill share × growth multiplier — captures how much GDP-proxy output this sector generates relative to its size. 100th = highest-ranked.</span></i></div>
             <p class="panel-sub">Percentile rankings across key workforce dimensions relative to all other local industry sectors.</p>
             <div class="chart-wrap radar-panel">
                 <div class="radar-metrics" id="radarMetrics"></div>
@@ -957,10 +962,20 @@
             `Approximately <span class="stat">${fmtNum(indEmpl)} people</span> work in this sector, ` +
             `with an average annual wage of <span class="stat">${fmtDollar(Math.round(avgWage))}</span> across all sub-sectors.`;
 
+        // EII = (industry avg wage / regional avg wage) × (1 + growth rate)
+        // Measures wage-adjusted economic momentum vs. the regional baseline
+        const allIndRows    = rows.filter(r => (r['NAICS'] || '').trim() !== '');
+        const regWageNum    = allIndRows.reduce((s, r) => s + toNum(r['Avg Ann Wages']) * toNum(r['Empl']), 0);
+        const regWageDen    = allIndRows.reduce((s, r) => s + toNum(r['Empl']), 0);
+        const regionalAvgWage = regWageDen > 0 ? regWageNum / regWageDen : 1;
+        const avgGrowth     = indRows.length ? indRows.reduce((s, r) => s + toNum(r['Ann % Growth']), 0) / indRows.length : 0;
+        const eiiDisplay    = (avgWage / regionalAvgWage) * (1 + Math.max(avgGrowth, -0.5));
+
         document.getElementById('kpi-empl').textContent   = fmtNum(indEmpl);
         document.getElementById('kpi-share').textContent  = share.toFixed(1) + '%';
         document.getElementById('kpi-wage').textContent   = fmtDollar(Math.round(avgWage));
         document.getElementById('kpi-demand').textContent = fmtNum(indDemand);
+        document.getElementById('kpi-eii').textContent    = eiiDisplay.toFixed(2) + '×';
 
         const shortName = config.name.split(',')[0].split('&')[0].trim();
         document.getElementById('doughnut-sub').textContent =
@@ -989,7 +1004,17 @@
     function buildRadar(id, rows, totalEmpl, accentColor) {
         const { r, g, b } = hexToRgb(accentColor);
 
-        // Compute 5 metrics for every industry
+        // Compute 5 metrics for every industry (including EII for radar)
+        // First pass: total regional wage bill needed to normalize EII
+        let totalWageBill = 0;
+        Object.entries(INDUSTRIES).forEach(([iid, icfg]) => {
+            const irows = rows.filter(row => {
+                const code = (row['NAICS'] || '').trim();
+                return code && icfg.prefixes.some(p => code.startsWith(p));
+            });
+            totalWageBill += irows.reduce((s, r) => s + toNum(r['Avg Ann Wages']) * toNum(r['Empl']), 0);
+        });
+
         const metrics = {};
         Object.entries(INDUSTRIES).forEach(([iid, icfg]) => {
             const irows = rows.filter(row => {
@@ -1000,15 +1025,18 @@
             const empl   = irows.reduce((s, r) => s + toNum(r['Empl']), 0);
             const wageN  = irows.reduce((s, r) => s + toNum(r['Avg Ann Wages']) * toNum(r['Empl']), 0);
             const wageD  = irows.reduce((s, r) => s + toNum(r['Empl']), 0);
-            const lqVals = irows.filter(r => toNum(r['LQ']) > 0).map(r => toNum(r['LQ']));
             const gVals  = irows.map(r => toNum(r['Ann % Growth']));
             const demand = irows.reduce((s, r) => s + toNum(r['Total Demand']), 0);
+            const avgG   = gVals.length ? gVals.reduce((a, v) => a + v, 0) / gVals.length : 0;
+            // EII = wage bill share of regional total × growth multiplier
+            // Captures: how much economic output (wages) this sector generates, weighted by trajectory
+            const eii    = totalWageBill > 0 ? (wageN / totalWageBill * 100) * (1 + Math.max(avgG, -0.5)) : 0;
             metrics[iid] = {
                 share:  totalEmpl > 0 ? empl / totalEmpl * 100 : 0,
                 wage:   wageD > 0 ? wageN / wageD : 0,
-                lq:     lqVals.length ? lqVals.reduce((a, v) => a + v, 0) / lqVals.length : 0,
-                growth: gVals.length  ? gVals.reduce((a, v) => a + v, 0) / gVals.length   : 0,
+                growth: avgG,
                 rate:   empl > 0 ? demand / empl * 100 : 0,
+                eii,
             };
         });
 
@@ -1021,11 +1049,11 @@
         }
 
         const DIMS = [
-            { key: 'share',  label: 'Employment Scale' },
-            { key: 'wage',   label: 'Wage Level'       },
-            { key: 'lq',     label: 'Local Specialty'   },
-            { key: 'growth', label: 'Job Growth'       },
-            { key: 'rate',   label: 'Hiring Activity'  },
+            { key: 'share',  label: 'Employment Scale'  },
+            { key: 'wage',   label: 'Wage Level'        },
+            { key: 'eii',    label: 'Economic Impact'   },
+            { key: 'growth', label: 'Job Growth'        },
+            { key: 'rate',   label: 'Hiring Activity'   },
         ];
         const pcts = DIMS.map(d => pct(d.key));
 
@@ -1046,7 +1074,7 @@
         new Chart(document.getElementById('radarChart'), {
             type: 'radar',
             data: {
-                labels: ['Employment\nScale', 'Wage\nLevel', 'Local\nSpecialty', 'Job\nGrowth', 'Hiring\nActivity'],
+                labels: ['Employment\nScale', 'Wage\nLevel', 'Economic\nImpact', 'Job\nGrowth', 'Hiring\nActivity'],
                 datasets: [{
                     data: pcts,
                     backgroundColor: `rgba(${r},${g},${b},0.15)`,

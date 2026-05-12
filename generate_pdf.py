@@ -204,7 +204,7 @@ def build_occ_table(occ_rows, wage_lookup):
     return head + rows_html + '</tbody></table>'
 
 def build_radar_metrics_html(radar_data, acc):
-    dims = ['Employment Scale', 'Wage Level', 'Local Specialty', 'Job Growth', 'Hiring Activity']
+    dims = ['Employment Scale', 'Wage Level', 'Economic Impact', 'Job Growth', 'Hiring Activity']
     html = ''
     for label, v in zip(dims, radar_data):
         color = acc if v >= 66 else ('#f59e0b' if v >= 33 else '#9ca3af')
@@ -301,6 +301,13 @@ def process(industry_id, rows):
     )[:8]
 
     # Radar — percentile rank across all industries for 5 dimensions
+    # First pass: total regional wage bill for EII normalization
+    total_wage_bill = 0
+    for iid, icfg in INDUSTRIES.items():
+        ir = [r for r in rows if r['NAICS'].strip()
+              and any(r['NAICS'].strip().startswith(p) for p in icfg['prefixes'])]
+        total_wage_bill += sum(to_num(r['Avg Ann Wages']) * to_num(r['Empl']) for r in ir)
+
     all_metrics = {}
     for iid, icfg in INDUSTRIES.items():
         ir = [r for r in rows if r['NAICS'].strip()
@@ -310,15 +317,17 @@ def process(industry_id, rows):
         e  = sum(to_num(r['Empl']) for r in ir)
         wn = sum(to_num(r['Avg Ann Wages']) * to_num(r['Empl']) for r in ir)
         wd = sum(to_num(r['Empl']) for r in ir)
-        lv = [to_num(r['LQ']) for r in ir if to_num(r['LQ']) > 0]
         gv = [to_num(r['Ann % Growth']) for r in ir]
         dm = sum(to_num(r['Total Demand']) for r in ir)
+        avg_g = sum(gv) / len(gv) if gv else 0
+        # EII = wage bill share of regional total × growth multiplier
+        eii = (wn / total_wage_bill * 100) * (1 + max(avg_g, -0.5)) if total_wage_bill > 0 else 0
         all_metrics[iid] = {
             'share':  e / total_empl * 100 if total_empl > 0 else 0,
             'wage':   wn / wd if wd > 0 else 0,
-            'lq':     sum(lv) / len(lv) if lv else 0,
-            'growth': sum(gv) / len(gv) if gv else 0,
+            'growth': avg_g,
             'rate':   dm / e * 100 if e > 0 else 0,
+            'eii':    eii,
         }
 
     def pct_rank(key):
@@ -328,9 +337,16 @@ def process(industry_id, rows):
         return round(rank / (len(vals) - 1) * 100) if len(vals) > 1 else 50
 
     radar_data = [
-        pct_rank('share'), pct_rank('wage'), pct_rank('lq'),
+        pct_rank('share'), pct_rank('wage'), pct_rank('eii'),
         pct_rank('growth'), pct_rank('rate'),
     ]
+
+    # EII display value for KPI card
+    reg_wage_num = sum(to_num(r['Avg Ann Wages']) * to_num(r['Empl']) for r in rows if r['NAICS'].strip())
+    reg_wage_den = sum(to_num(r['Empl']) for r in rows if r['NAICS'].strip())
+    regional_avg_wage = reg_wage_num / reg_wage_den if reg_wage_den > 0 else 1
+    ind_avg_growth = sum(to_num(r['Ann % Growth']) for r in ind_rows) / len(ind_rows) if ind_rows else 0
+    eii_display = (avg_wage / regional_avg_wage) * (1 + max(ind_avg_growth, -0.5))
 
     return dict(
         config=config,
@@ -343,7 +359,7 @@ def process(industry_id, rows):
         wage_top_len=len(wage_top), demand_rows=demand_rows,
         growth_rows=growth_rows, lq_rows=lq_rows,
         sources_rows=sources_rows, rate_rows=rate_rows,
-        radar_data=radar_data,
+        radar_data=radar_data, eii_display=eii_display,
     )
 
 # ── HTML builder ───────────────────────────────────────────────────────────
@@ -538,7 +554,7 @@ body {{ font-family:-apple-system,'Helvetica Neue',Arial,sans-serif; font-size:9
 .cover .sub {{ font-size:8.5pt; color:#6b7280; }}
 .narrative {{ font-size:9pt; color:#374151; margin-bottom:10pt; line-height:1.55; }}
 .narrative strong, .narrative .stat {{ color:#111827; font-weight:600; }}
-.krow {{ display:grid; grid-template-columns:repeat(4,1fr); gap:6pt; margin-bottom:14pt; page-break-inside:avoid; }}
+.krow {{ display:grid; grid-template-columns:repeat(5,1fr); gap:6pt; margin-bottom:14pt; page-break-inside:avoid; }}
 .kcard {{ background:#f9fafb; border:.5pt solid #e5e7eb; border-radius:4pt; padding:7pt 9pt; }}
 .klbl {{ font-size:5.5pt; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:#6b7280; margin-bottom:5pt; }}
 .kval {{ font-size:16pt; font-weight:700; letter-spacing:-.03em; color:#111827; line-height:1; }}
@@ -595,6 +611,11 @@ canvas {{ display:block; }}
     <div class="klbl">Projected Annual Openings</div>
     <div class="kval">{fmt_num(d['ind_demand'])}</div>
     <div class="ksub">total demand openings</div>
+  </div>
+  <div class="kcard">
+    <div class="klbl">Economic Impact Score</div>
+    <div class="kval">{d['eii_display']:.2f}×</div>
+    <div class="ksub">wage &amp; growth vs. regional baseline</div>
   </div>
 </div>
 
@@ -792,7 +813,7 @@ if (cradEl) {{
   new Chart(cradEl, {{
     type: 'radar',
     data: {{
-      labels: ['Employment\\nScale', 'Wage\\nLevel', 'Specialization\\n(LQ)', 'Job\\nGrowth', 'Hiring\\nActivity'],
+      labels: ['Employment\\nScale', 'Wage\\nLevel', 'Economic\\nImpact', 'Job\\nGrowth', 'Hiring\\nActivity'],
       datasets: [{{ data: D.radar_data,
         backgroundColor: fade(acc, 0.15),
         borderColor: acc, borderWidth: 2,

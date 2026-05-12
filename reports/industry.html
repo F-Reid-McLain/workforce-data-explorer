@@ -1005,15 +1005,17 @@
         const { r, g, b } = hexToRgb(accentColor);
 
         // Compute 5 metrics for every industry (including EII for radar)
-        // First pass: total regional wage bill needed to normalize EII
-        let totalWageBill = 0;
+        // First pass: regional avg wage for EII normalization (wage premium per job)
+        let totalWageBill = 0, totalAllEmpl = 0;
         Object.entries(INDUSTRIES).forEach(([iid, icfg]) => {
             const irows = rows.filter(row => {
                 const code = (row['NAICS'] || '').trim();
                 return code && icfg.prefixes.some(p => code.startsWith(p));
             });
             totalWageBill += irows.reduce((s, r) => s + toNum(r['Avg Ann Wages']) * toNum(r['Empl']), 0);
+            totalAllEmpl  += irows.reduce((s, r) => s + toNum(r['Empl']), 0);
         });
+        const regionalAvgWage = totalAllEmpl > 0 ? totalWageBill / totalAllEmpl : 1;
 
         const metrics = {};
         Object.entries(INDUSTRIES).forEach(([iid, icfg]) => {
@@ -1028,12 +1030,13 @@
             const gVals  = irows.map(r => toNum(r['Ann % Growth']));
             const demand = irows.reduce((s, r) => s + toNum(r['Total Demand']), 0);
             const avgG   = gVals.length ? gVals.reduce((a, v) => a + v, 0) / gVals.length : 0;
-            // EII = wage bill share of regional total × growth multiplier
-            // Captures: how much economic output (wages) this sector generates, weighted by trajectory
-            const eii    = totalWageBill > 0 ? (wageN / totalWageBill * 100) * (1 + Math.max(avgG, -0.5)) : 0;
+            const avgW   = wageD > 0 ? wageN / wageD : 0;
+            // EII = wage premium vs regional baseline × growth multiplier
+            // Answers: does this sector pay above/below average, and is it growing?
+            const eii    = (avgW / regionalAvgWage) * (1 + Math.max(avgG, -0.5));
             metrics[iid] = {
                 share:  totalEmpl > 0 ? empl / totalEmpl * 100 : 0,
-                wage:   wageD > 0 ? wageN / wageD : 0,
+                wage:   avgW,
                 growth: avgG,
                 rate:   empl > 0 ? demand / empl * 100 : 0,
                 eii,

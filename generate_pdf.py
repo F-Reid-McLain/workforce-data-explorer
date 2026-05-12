@@ -301,12 +301,15 @@ def process(industry_id, rows):
     )[:8]
 
     # Radar — percentile rank across all industries for 5 dimensions
-    # First pass: total regional wage bill for EII normalization
+    # First pass: regional avg wage for EII normalization (wage premium per job)
     total_wage_bill = 0
+    total_all_empl  = 0
     for iid, icfg in INDUSTRIES.items():
         ir = [r for r in rows if r['NAICS'].strip()
               and any(r['NAICS'].strip().startswith(p) for p in icfg['prefixes'])]
         total_wage_bill += sum(to_num(r['Avg Ann Wages']) * to_num(r['Empl']) for r in ir)
+        total_all_empl  += sum(to_num(r['Empl']) for r in ir)
+    regional_avg_wage_radar = total_wage_bill / total_all_empl if total_all_empl > 0 else 1
 
     all_metrics = {}
     for iid, icfg in INDUSTRIES.items():
@@ -320,11 +323,12 @@ def process(industry_id, rows):
         gv = [to_num(r['Ann % Growth']) for r in ir]
         dm = sum(to_num(r['Total Demand']) for r in ir)
         avg_g = sum(gv) / len(gv) if gv else 0
-        # EII = wage bill share of regional total × growth multiplier
-        eii = (wn / total_wage_bill * 100) * (1 + max(avg_g, -0.5)) if total_wage_bill > 0 else 0
+        avg_w = wn / wd if wd > 0 else 0
+        # EII = wage premium vs regional baseline × growth multiplier
+        eii = (avg_w / regional_avg_wage_radar) * (1 + max(avg_g, -0.5))
         all_metrics[iid] = {
             'share':  e / total_empl * 100 if total_empl > 0 else 0,
-            'wage':   wn / wd if wd > 0 else 0,
+            'wage':   avg_w,
             'growth': avg_g,
             'rate':   dm / e * 100 if e > 0 else 0,
             'eii':    eii,

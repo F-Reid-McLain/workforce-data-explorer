@@ -83,7 +83,7 @@ NAICS_SOC_GROUPS = {
     '55': ['11','13','43'],
     '56': ['43','33','37','39'],
     '61': ['25','43','11'],
-    '62': ['29','31','21','43'],
+    '62': ['29','31'],
     '71': ['27','39','43'],
     '72': ['35','39','41','43'],
     '81': ['49','39','37','43'],
@@ -165,7 +165,7 @@ def build_occ_table(occ_rows, wage_lookup):
         f'<th style="{th_style}">Mean Wage</th>'
         f'<th style="{th_style}">Entry → Experienced</th>'
         f'<th style="{th_style}">Openings/yr</th>'
-        f'<th style="{th_style}">LQ</th>'
+        f'<th style="{th_style}">Macon vs. National</th>'
         '</tr></thead><tbody>'
     )
 
@@ -197,11 +197,29 @@ def build_occ_table(occ_rows, wage_lookup):
             f'<td style="{td}color:#6b7280;font-size:7.5pt;white-space:nowrap;">{wage_range}</td>'
             f'<td style="{td}color:#374151;">{fmt_num(to_num(r.get("Total Demand", 0)))}</td>'
             f'<td style="{td}"><span style="display:inline-block;padding:2pt 7pt;border-radius:10pt;font-size:7.5pt;font-weight:600;{lq_style}">'
-            f'{"N/A" if lq <= 0 else f"{lq:.2f}"}</span></td>'
+            f'{"N/A" if lq <= 0 else f"{lq:.1f}×"}</span></td>'
             '</tr>'
         )
 
     return head + rows_html + '</tbody></table>'
+
+def build_radar_metrics_html(radar_data, acc):
+    dims = ['Employment Scale', 'Wage Level', 'Local Specialty', 'Job Growth', 'Hiring Activity']
+    html = ''
+    for label, v in zip(dims, radar_data):
+        color = acc if v >= 66 else ('#f59e0b' if v >= 33 else '#9ca3af')
+        html += (
+            f'<div style="margin-bottom:8pt;">'
+            f'<div style="font-size:5.5pt;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:#6b7280;margin-bottom:3pt;">{label}</div>'
+            f'<div style="display:flex;align-items:center;gap:6pt;">'
+            f'<div style="flex:1;height:2.5pt;background:#e5e7eb;border-radius:2pt;overflow:hidden;">'
+            f'<div style="width:{v}%;height:100%;background:{color};"></div></div>'
+            f'<div style="font-size:8pt;font-weight:700;color:{color};white-space:nowrap;">{v}'
+            f'<span style="font-size:5.5pt;color:#9ca3af;">th</span></div>'
+            f'</div></div>'
+        )
+    return html
+
 
 # ── Data processing ────────────────────────────────────────────────────────
 
@@ -282,6 +300,38 @@ def process(industry_id, rows):
         key=lambda r: -(to_num(r.get('Total Demand', 0)) / to_num(r.get('Empl', 0)))
     )[:8]
 
+    # Radar — percentile rank across all industries for 5 dimensions
+    all_metrics = {}
+    for iid, icfg in INDUSTRIES.items():
+        ir = [r for r in rows if r['NAICS'].strip()
+              and any(r['NAICS'].strip().startswith(p) for p in icfg['prefixes'])]
+        if not ir:
+            continue
+        e  = sum(to_num(r['Empl']) for r in ir)
+        wn = sum(to_num(r['Avg Ann Wages']) * to_num(r['Empl']) for r in ir)
+        wd = sum(to_num(r['Empl']) for r in ir)
+        lv = [to_num(r['LQ']) for r in ir if to_num(r['LQ']) > 0]
+        gv = [to_num(r['Ann % Growth']) for r in ir]
+        dm = sum(to_num(r['Total Demand']) for r in ir)
+        all_metrics[iid] = {
+            'share':  e / total_empl * 100 if total_empl > 0 else 0,
+            'wage':   wn / wd if wd > 0 else 0,
+            'lq':     sum(lv) / len(lv) if lv else 0,
+            'growth': sum(gv) / len(gv) if gv else 0,
+            'rate':   dm / e * 100 if e > 0 else 0,
+        }
+
+    def pct_rank(key):
+        vals = sorted(v[key] for v in all_metrics.values())
+        my   = all_metrics.get(industry_id, {}).get(key, 0)
+        rank = sum(1 for v in vals if v < my)
+        return round(rank / (len(vals) - 1) * 100) if len(vals) > 1 else 50
+
+    radar_data = [
+        pct_rank('share'), pct_rank('wage'), pct_rank('lq'),
+        pct_rank('growth'), pct_rank('rate'),
+    ]
+
     return dict(
         config=config,
         ind_empl=ind_empl, ind_demand=ind_demand,
@@ -293,6 +343,7 @@ def process(industry_id, rows):
         wage_top_len=len(wage_top), demand_rows=demand_rows,
         growth_rows=growth_rows, lq_rows=lq_rows,
         sources_rows=sources_rows, rate_rows=rate_rows,
+        radar_data=radar_data,
     )
 
 # ── HTML builder ───────────────────────────────────────────────────────────
@@ -315,6 +366,9 @@ def build_html(industry_id, rows, soc_rows=None, occ_wage_rows=None):
     occ_rows, wage_lookup = process_occupations(industry_id, soc_rows or [], occ_wage_rows or [])
     occ_h       = max(120, min(6, len(occ_rows)) * 22 + 32)
     occ_table   = build_occ_table(occ_rows, wage_lookup)
+
+    # Radar
+    radar_metrics_html = build_radar_metrics_html(d['radar_data'], acc)
 
     # Narrative
     narrative = (
@@ -459,6 +513,7 @@ def build_html(industry_id, rows, soc_rows=None, occ_wage_rows=None):
                         for x in d['rate_rows']],
         'occ_empl': occ_empl_data,
         'occ_wages': occ_wage_data,
+        'radar_data': d['radar_data'],
     }, ensure_ascii=False).replace('</', '<\\/')
 
     logo_uri = logo_data_uri()
@@ -540,6 +595,15 @@ canvas {{ display:block; }}
     <div class="klbl">Projected Annual Openings</div>
     <div class="kval">{fmt_num(d['ind_demand'])}</div>
     <div class="ksub">total demand openings</div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="stitle">Industry Profile</div>
+  <p class="ssub">Percentile rankings across key workforce dimensions relative to all other local industry sectors.</p>
+  <div class="cbox" style="display:flex;gap:18pt;align-items:center;padding:10pt 12pt;">
+    <div style="min-width:120pt;">{radar_metrics_html}</div>
+    <div><canvas id="crad" width="220" height="220"></canvas></div>
   </div>
 </div>
 
@@ -718,6 +782,32 @@ if (crEl && D.rate_rows.length) {{
       plugins: {{ legend: {{ display: false }}, tooltip: {{ enabled: false }},
         datalabels: {{ anchor: 'end', align: 'right', clamp: false, clip: false, color: '#9ca3af', font: {{ size: 9, weight: '500' }}, formatter: function(v) {{ return toNum(v).toFixed(1) + '%'; }} }} }},
       scales: {{ y: {{ grid: {{ display: false }}, border: {{ display: false }}, ticks: {{ color: '#374151', font: {{ size: 9 }} }} }}, x: {{ display: false, min: 0 }} }} }},
+    plugins: [ChartDataLabels]
+  }});
+}}
+
+// Industry Profile Radar
+var cradEl = document.getElementById('crad');
+if (cradEl) {{
+  new Chart(cradEl, {{
+    type: 'radar',
+    data: {{
+      labels: ['Employment\\nScale', 'Wage\\nLevel', 'Specialization\\n(LQ)', 'Job\\nGrowth', 'Hiring\\nActivity'],
+      datasets: [{{ data: D.radar_data,
+        backgroundColor: fade(acc, 0.15),
+        borderColor: acc, borderWidth: 2,
+        pointBackgroundColor: acc, pointBorderColor: 'transparent', pointRadius: 4
+      }}]
+    }},
+    options: {{
+      animation: false, responsive: false, maintainAspectRatio: true,
+      scales: {{ r: {{ min: 0, max: 100,
+        ticks: {{ display: false }},
+        grid: {{ color: '#e5e7eb' }}, angleLines: {{ color: '#e5e7eb' }},
+        pointLabels: {{ color: '#374151', font: {{ size: 8.5, weight: '500' }} }}
+      }} }},
+      plugins: {{ legend: {{ display: false }}, tooltip: {{ enabled: false }}, datalabels: {{ display: false }} }}
+    }},
     plugins: [ChartDataLabels]
   }});
 }}

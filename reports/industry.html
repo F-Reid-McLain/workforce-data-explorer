@@ -390,6 +390,102 @@
             font-size: 0.8rem;
         }
 
+        /* ── Info tooltips ─────────────────────────── */
+
+        .info-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--surface-2);
+            border: 1px solid var(--border-2);
+            color: var(--text-muted);
+            font-size: 0.58rem;
+            font-weight: 700;
+            font-style: normal;
+            cursor: default;
+            margin-left: 7px;
+            position: relative;
+            vertical-align: middle;
+            flex-shrink: 0;
+            line-height: 1;
+            user-select: none;
+            transition: background 0.15s, color 0.15s;
+        }
+        .info-icon:hover { background: var(--border-2); color: var(--text); }
+
+        .info-tip {
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 0;
+            background: var(--surface-2);
+            border: 1px solid var(--border-2);
+            color: var(--text);
+            font-size: 0.7rem;
+            font-weight: 400;
+            line-height: 1.55;
+            padding: 9px 13px;
+            border-radius: 6px;
+            width: 230px;
+            z-index: 200;
+            white-space: normal;
+            text-align: left;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            transition: opacity 0.15s, visibility 0.15s;
+            pointer-events: none;
+        }
+        .info-tip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 11px;
+            border: 5px solid transparent;
+            border-top-color: var(--border-2);
+        }
+        .info-icon:hover .info-tip { visibility: visible; opacity: 1; }
+
+        /* ── Radar profile ─────────────────────────── */
+
+        .radar-panel {
+            display: flex;
+            gap: 28px;
+            align-items: center;
+            height: 280px;
+            padding: 20px 24px;
+        }
+        .radar-metrics {
+            min-width: 190px;
+            display: flex;
+            flex-direction: column;
+            gap: 11px;
+        }
+        .radar-metric-row { display: flex; flex-direction: column; gap: 4px; }
+        .radar-metric-label {
+            font-size: 0.64rem;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+        .radar-metric-bar-wrap { display: flex; align-items: center; gap: 8px; }
+        .radar-bar-bg {
+            flex: 1;
+            height: 3px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .radar-bar-fill { height: 100%; border-radius: 2px; }
+        .radar-metric-val {
+            font-size: 0.7rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
         /* ── Back link ─────────────────────────────── */
 
         .back-link {
@@ -472,9 +568,21 @@
             </div>
         </div>
 
+        <!-- Industry Profile (radar) -->
+        <div style="margin-bottom:20px;">
+            <div class="panel-title">Industry Profile <i class="info-icon">i<span class="info-tip">Percentile rank across 5 workforce dimensions compared to all other local industries. 100th = highest-ranked; 0th = lowest. Computed from regional data only.</span></i></div>
+            <p class="panel-sub">Percentile rankings across key workforce dimensions relative to all other local industry sectors.</p>
+            <div class="chart-wrap radar-panel">
+                <div class="radar-metrics" id="radarMetrics"></div>
+                <div style="position:relative;flex:1;height:100%;">
+                    <canvas id="radarChart"></canvas>
+                </div>
+            </div>
+        </div>
+
         <!-- Full width: Economy share -->
         <div style="margin-bottom:20px;">
-            <div class="panel-title">Share of the Local Economy</div>
+            <div class="panel-title">Share of the Local Economy <i class="info-icon">i<span class="info-tip">Each slice shows a sector's share of total regional employment. The highlighted slice is this industry; all others appear in grey.</span></i></div>
             <p class="panel-sub" id="doughnut-sub">Employment distribution across all major industry sectors.</p>
             <div class="chart-wrap split" style="height:460px;">
                 <div style="position:relative;height:420px;">
@@ -487,7 +595,7 @@
         <!-- Row 2: Employment + Wages -->
         <div class="chart-grid-2">
             <div>
-                <div class="panel-title">Breakdown by Employer Type</div>
+                <div class="panel-title">Breakdown by Employer Type <i class="info-icon">i<span class="info-tip">Top sub-sectors ranked by total number of workers employed within this industry.</span></i></div>
                 <p class="panel-sub" id="empl-sub">Top sub-sectors by total employment.</p>
                 <div class="chart-wrap" id="emplWrap" style="height:360px;">
                     <div style="position:relative;height:100%;">
@@ -496,7 +604,7 @@
                 </div>
             </div>
             <div>
-                <div class="panel-title">Highest &amp; Lowest Paying Sub-Sectors</div>
+                <div class="panel-title">Highest &amp; Lowest Paying Sub-Sectors <i class="info-icon">i<span class="info-tip">Average annual wages per sub-sector. Teal bars = top paying; amber bars = lowest paying within this industry.</span></i></div>
                 <p class="panel-sub" id="wage-sub">Average annual wage comparison across sub-sectors.</p>
                 <div class="chart-wrap" id="wageWrap" style="height:360px;">
                     <div style="position:relative;height:calc(100% - 28px);">
@@ -508,7 +616,7 @@
 
         <!-- Full width: Demand -->
         <div style="margin-bottom:20px;">
-            <div class="panel-title">Sub-Sectors with the Highest Labor Demand</div>
+            <div class="panel-title">Sub-Sectors with the Highest Labor Demand <i class="info-icon">i<span class="info-tip">Projected annual job openings by sub-sector, combining new positions and replacement demand from worker exits and transfers.</span></i></div>
             <p class="panel-sub" id="demand-sub">Projected annual job openings (new positions + replacement demand).</p>
             <div class="chart-wrap" id="demandWrap" style="height:340px;">
                 <div style="position:relative;height:100%;">
@@ -525,7 +633,7 @@
 
             <div class="chart-wrap" style="height:300px;">
                 <div class="mini-header">
-                    <div class="mini-title">Growth Trends</div>
+                    <div class="mini-title">Growth Trends <i class="info-icon">i<span class="info-tip">Projected net new jobs per year. Positive = growing sub-sector; negative = contraction. Does not include replacement demand.</span></i></div>
                     <div class="mini-sub">Projected net new jobs per year — top 5 sub-sectors</div>
                 </div>
                 <div style="position:relative;height:calc(100% - 62px);">
@@ -535,8 +643,8 @@
 
             <div class="chart-wrap" style="height:300px;">
                 <div class="mini-header">
-                    <div class="mini-title">Regional Concentration</div>
-                    <div class="mini-sub">Location quotient — LQ &gt; 1 means more concentrated than national average</div>
+                    <div class="mini-title">Macon Specializations <i class="info-icon">i<span class="info-tip">Shows how many times Macon's share of workers in each sub-sector exceeds the national average. 2× means Macon employs twice the national share — a genuine local specialty.</span></i></div>
+                    <div class="mini-sub">Sub-sectors where Macon employs a higher share of workers than the national average</div>
                 </div>
                 <div style="position:relative;height:calc(100% - 62px);">
                     <canvas id="lqChart"></canvas>
@@ -545,7 +653,7 @@
 
             <div class="chart-wrap" style="height:300px;">
                 <div class="mini-header">
-                    <div class="mini-title">Opening Sources</div>
+                    <div class="mini-title">Opening Sources <i class="info-icon">i<span class="info-tip">Breaks down what drives annual openings: exits (retirements/separations), transfers (workers moving between sectors), and net employment growth.</span></i></div>
                     <div class="mini-sub">How demand is composed — attrition (exits), sector movement (transfers), and growth</div>
                 </div>
                 <div style="position:relative;height:calc(100% - 62px);">
@@ -555,7 +663,7 @@
 
             <div class="chart-wrap" style="height:300px;">
                 <div class="mini-header">
-                    <div class="mini-title">Opening Rate</div>
+                    <div class="mini-title">Opening Rate <i class="info-icon">i<span class="info-tip">Annual job openings as a percentage of total employment — measures hiring intensity or workforce turnover. Higher = more frequent hiring cycles.</span></i></div>
                     <div class="mini-sub">Annual openings as % of employment — hiring intensity by sub-sector</div>
                 </div>
                 <div style="position:relative;height:calc(100% - 62px);">
@@ -571,14 +679,14 @@
         <!-- Occupations: two charts -->
         <div class="chart-grid-2" style="align-items:start; margin-bottom:20px;">
             <div>
-                <div class="panel-title">Top Occupations by Employment</div>
+                <div class="panel-title">Top Occupations by Employment <i class="info-icon">i<span class="info-tip">Most common job titles in this industry ranked by worker count, filtered to occupations typical of this sector (SOC codes).</span></i></div>
                 <p class="panel-sub">Occupations most commonly found in this industry sector.</p>
                 <div class="chart-wrap" id="occEmplWrap" style="height:320px;">
                     <div style="position:relative;height:100%;"><canvas id="occEmplChart"></canvas></div>
                 </div>
             </div>
             <div>
-                <div class="panel-title">Wage Range by Occupation</div>
+                <div class="panel-title">Wage Range by Occupation <i class="info-icon">i<span class="info-tip">Entry-level to experienced wage spread per occupation. Wider bars indicate greater earnings potential over a career. Source: BLS Occupational Wages.</span></i></div>
                 <p class="panel-sub">Entry-level to experienced wage spread for top occupations.</p>
                 <div class="chart-wrap" id="occWageWrap" style="height:320px;">
                     <div style="position:relative;height:100%;"><canvas id="occWageChart"></canvas></div>
@@ -588,8 +696,8 @@
 
         <!-- Occupation detail table -->
         <div style="margin-bottom:40px;">
-            <div class="panel-title">Occupation Detail</div>
-            <p class="panel-sub">Key workforce metrics for occupations in this industry. LQ &gt; 1 indicates above-average regional concentration.</p>
+            <div class="panel-title">Occupation Detail <i class="info-icon">i<span class="info-tip">Full metrics per occupation. "Macon vs. National" shows how many times Macon's share of that occupation exceeds the national average — green = Macon specialty, amber = near average, grey = below average.</span></i></div>
+            <p class="panel-sub">Key workforce metrics for occupations in this industry.</p>
             <div class="chart-wrap" style="padding:0; overflow:hidden;" id="occTableWrap">
                 <table class="occ-table">
                     <thead>
@@ -600,7 +708,7 @@
                             <th>Mean Wage</th>
                             <th>Entry → Experienced</th>
                             <th>Annual Openings</th>
-                            <th>LQ</th>
+                            <th>Macon vs. National</th>
                         </tr>
                     </thead>
                     <tbody id="occTableBody"></tbody>
@@ -657,7 +765,7 @@
         '55': ['11','13','43'],
         '56': ['43','33','37','39'],
         '61': ['25','43','11'],
-        '62': ['29','31','21','43'],
+        '62': ['29','31'],
         '71': ['27','39','43'],
         '72': ['35','39','41','43'],
         '81': ['49','39','37','43'],
@@ -864,6 +972,7 @@
         document.getElementById('demand-sub').textContent =
             `Top sub-sectors by projected annual job openings.`;
 
+        try { buildRadar(id, rows, totalEmpl, config.color); }              catch(e) { console.error('radar', e); }
         try { buildDoughnut(sectorsSorted, canonicalId, config.color); }   catch(e) { console.error('doughnut', e); }
         try { buildEmplChart(indRows, config.color); }                      catch(e) { console.error('empl', e); }
         try { buildWageChart(indRows, config.color); }                      catch(e) { console.error('wage', e); }
@@ -874,6 +983,100 @@
         try { buildRateChart(indRows, config.color); }                      catch(e) { console.error('rate', e); }
         try { buildOccupationsSection(id, socRows, wageRows); }             catch(e) { console.error('occ', e); }
     });
+
+    // ── Industry Profile Radar ────────────────────────────────────
+
+    function buildRadar(id, rows, totalEmpl, accentColor) {
+        const { r, g, b } = hexToRgb(accentColor);
+
+        // Compute 5 metrics for every industry
+        const metrics = {};
+        Object.entries(INDUSTRIES).forEach(([iid, icfg]) => {
+            const irows = rows.filter(row => {
+                const code = (row['NAICS'] || '').trim();
+                return code && icfg.prefixes.some(p => code.startsWith(p));
+            });
+            if (!irows.length) return;
+            const empl   = irows.reduce((s, r) => s + toNum(r['Empl']), 0);
+            const wageN  = irows.reduce((s, r) => s + toNum(r['Avg Ann Wages']) * toNum(r['Empl']), 0);
+            const wageD  = irows.reduce((s, r) => s + toNum(r['Empl']), 0);
+            const lqVals = irows.filter(r => toNum(r['LQ']) > 0).map(r => toNum(r['LQ']));
+            const gVals  = irows.map(r => toNum(r['Ann % Growth']));
+            const demand = irows.reduce((s, r) => s + toNum(r['Total Demand']), 0);
+            metrics[iid] = {
+                share:  totalEmpl > 0 ? empl / totalEmpl * 100 : 0,
+                wage:   wageD > 0 ? wageN / wageD : 0,
+                lq:     lqVals.length ? lqVals.reduce((a, v) => a + v, 0) / lqVals.length : 0,
+                growth: gVals.length  ? gVals.reduce((a, v) => a + v, 0) / gVals.length   : 0,
+                rate:   empl > 0 ? demand / empl * 100 : 0,
+            };
+        });
+
+        // Percentile rank 0–100
+        function pct(key) {
+            const sorted = Object.values(metrics).map(v => v[key]).sort((a, b) => a - b);
+            const myVal  = (metrics[id] || {})[key] ?? 0;
+            const rank   = sorted.filter(v => v < myVal).length;
+            return Math.round(rank / (sorted.length - 1) * 100);
+        }
+
+        const DIMS = [
+            { key: 'share',  label: 'Employment Scale' },
+            { key: 'wage',   label: 'Wage Level'       },
+            { key: 'lq',     label: 'Local Specialty'   },
+            { key: 'growth', label: 'Job Growth'       },
+            { key: 'rate',   label: 'Hiring Activity'  },
+        ];
+        const pcts = DIMS.map(d => pct(d.key));
+
+        // Metric bars
+        document.getElementById('radarMetrics').innerHTML = DIMS.map((d, i) => {
+            const v     = pcts[i];
+            const color = v >= 66 ? accentColor : v >= 33 ? '#fb923c' : '#52525b';
+            const suf   = ['th','st','nd','rd'][v % 10 > 3 || (v % 100 >= 11 && v % 100 <= 13) ? 0 : v % 10] || 'th';
+            return `<div class="radar-metric-row">
+                <div class="radar-metric-label">${d.label}</div>
+                <div class="radar-metric-bar-wrap">
+                    <div class="radar-bar-bg"><div class="radar-bar-fill" style="width:${v}%;background:${color};"></div></div>
+                    <div class="radar-metric-val" style="color:${color}">${v}<span style="font-size:0.55rem;color:var(--text-muted)">${suf}</span></div>
+                </div>
+            </div>`;
+        }).join('');
+
+        new Chart(document.getElementById('radarChart'), {
+            type: 'radar',
+            data: {
+                labels: ['Employment\nScale', 'Wage\nLevel', 'Local\nSpecialty', 'Job\nGrowth', 'Hiring\nActivity'],
+                datasets: [{
+                    data: pcts,
+                    backgroundColor: `rgba(${r},${g},${b},0.15)`,
+                    borderColor: accentColor,
+                    borderWidth: 2,
+                    pointBackgroundColor: accentColor,
+                    pointBorderColor: 'transparent',
+                    pointRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        min: 0, max: 100,
+                        ticks: { display: false, stepSize: 25 },
+                        grid: { color: C.grid },
+                        angleLines: { color: C.grid },
+                        pointLabels: { color: C.text, font: { size: 11, weight: '500', family: C.font } },
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    datalabels: { display: false },
+                    tooltip: { callbacks: { label: ctx => `  ${ctx.raw}th percentile` } }
+                }
+            },
+            plugins: [bgPlugin]
+        });
+    }
 
     // ── Doughnut ─────────────────────────────────────────────────
 
@@ -1115,7 +1318,7 @@
                 layout: { padding: { right: 44, top: 2, bottom: 2 } },
                 plugins: {
                     legend: { display: false },
-                    tooltip: { callbacks: { label: ctx => '  LQ ' + ctx.raw.toFixed(2) + (ctx.raw >= 1 ? ' — above national avg' : '') } },
+                    tooltip: { callbacks: { label: ctx => '  ' + ctx.raw.toFixed(2) + '× national average' + (ctx.raw >= 1 ? ' — Macon specialty' : '') } },
                     datalabels: {
                         anchor:'end', align:'right', clamp:false, clip:false,
                         color: (ctx) => values[ctx.dataIndex] >= 1 ? accentColor : C.muted,
@@ -1320,7 +1523,7 @@
                 <td>${fmtDollar(toNum(r['Mean Ann Wages2']))}</td>
                 <td class="wage-range">${range}</td>
                 <td>${fmtNum(toNum(r['Total Demand']))}</td>
-                <td><span class="lq-badge ${lqCls}">${lq > 0 ? lq.toFixed(2) : 'N/A'}</span></td>
+                <td><span class="lq-badge ${lqCls}">${lq > 0 ? lq.toFixed(1) + '×' : 'N/A'}</span></td>
             </tr>`;
         }).join('');
     }

@@ -19,7 +19,7 @@
             --text-muted: #52525b;
             --accent:     #6366f1;
             --accent-dim: rgba(99,102,241,0.12);
-            --ind:        #34d399;   /* industry accent — overridden by JS */
+            --ind:        #34d399;
             --ind-dim:    rgba(52,211,153,0.14);
             --radius:     8px;
         }
@@ -46,7 +46,7 @@
         }
 
         .header-inner {
-            max-width: 1100px;
+            max-width: 1280px;
             margin: 0 auto;
             padding: 0 40px;
             height: 54px;
@@ -82,7 +82,7 @@
         /* ── Report container ──────────────────────── */
 
         .report {
-            max-width: 1100px;
+            max-width: 1280px;
             margin: 0 auto;
             padding: 0 40px 72px;
         }
@@ -90,9 +90,9 @@
         /* ── Cover ─────────────────────────────────── */
 
         .report-cover {
-            padding: 48px 0 36px;
+            padding: 40px 0 32px;
             border-bottom: 1px solid var(--border);
-            margin-bottom: 40px;
+            margin-bottom: 32px;
         }
 
         .cover-label {
@@ -101,7 +101,7 @@
             letter-spacing: 0.12em;
             text-transform: uppercase;
             color: var(--ind);
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -117,199 +117,277 @@
         }
 
         .report-cover h1 {
-            font-size: 2rem;
+            font-size: 1.9rem;
             font-weight: 700;
             letter-spacing: -0.03em;
             color: #fff;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             line-height: 1.15;
         }
 
-        .report-cover .subtitle {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-        }
+        .report-cover .subtitle { font-size: 0.85rem; color: var(--text-muted); }
 
-        .cover-actions {
-            margin-top: 20px;
-        }
+        .cover-actions { margin-top: 18px; }
 
         .download-btn {
             display: inline-flex;
             align-items: center;
             gap: 7px;
-            padding: 8px 16px;
+            padding: 7px 15px;
             background: var(--ind-dim);
             color: var(--ind);
             border: 1px solid var(--ind);
             border-radius: var(--radius);
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             font-weight: 600;
             letter-spacing: 0.03em;
             text-decoration: none;
-            transition: background 0.15s, opacity 0.15s;
+            transition: background 0.15s;
         }
+        .download-btn:hover { background: rgba(52,211,153,0.22); }
+        .download-btn svg { flex-shrink: 0; }
 
-        .download-btn:hover {
-            background: rgba(var(--ind-rgb, 52,211,153), 0.22);
-            opacity: 0.9;
-        }
-
-        .download-btn svg {
-            flex-shrink: 0;
-        }
-
-        /* ── Narrative ─────────────────────────────── */
+        /* ── Narrative + KPIs ─────────────────────── */
 
         .narrative {
-            font-size: 1rem;
+            font-size: 0.95rem;
             line-height: 1.8;
             color: var(--text);
-            margin-bottom: 32px;
-            max-width: 780px;
+            margin-bottom: 24px;
+            max-width: 860px;
         }
-
-        .narrative .stat {
-            color: #fff;
-            font-weight: 600;
-        }
-
-        /* ── KPI row ───────────────────────────────── */
+        .narrative .stat { color: #fff; font-weight: 600; }
 
         .kpi-row {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-            margin-bottom: 52px;
+            gap: 10px;
+            margin-bottom: 36px;
         }
 
         .kpi-card {
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            padding: 20px 22px 18px;
+            padding: 16px 18px 14px;
         }
 
         .kpi-label {
-            font-size: 0.65rem;
+            font-size: 0.62rem;
             font-weight: 600;
             letter-spacing: 0.1em;
             text-transform: uppercase;
             color: var(--text-muted);
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .kpi-value {
-            font-size: 1.65rem;
+            font-size: 1.5rem;
             font-weight: 700;
             letter-spacing: -0.03em;
             color: #fff;
             line-height: 1;
         }
-
         .kpi-value.ind { color: var(--ind); }
 
-        .kpi-sub {
-            font-size: 0.72rem;
-            color: var(--text-muted);
-            margin-top: 6px;
+        .kpi-sub { font-size: 0.68rem; color: var(--text-muted); margin-top: 5px; }
+
+        /* ── Chart grid layouts ────────────────────── */
+
+        .chart-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+            align-items: start;
         }
 
-        /* ── Report sections ───────────────────────── */
+        .chart-grid-4 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 48px;
+        }
 
-        .report-section { margin-bottom: 56px; }
+        /* ── Section divider ───────────────────────── */
 
-        .section-heading {
-            font-size: 1rem;
+        .section-divider {
+            font-size: 0.62rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            padding-top: 10px;
+            margin: 32px 0 20px;
+        }
+
+        .divider-tag {
+            display: inline-block;
+            background: var(--accent-dim);
+            color: var(--accent);
+            font-size: 0.58rem;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            padding: 2px 7px;
+            border-radius: 3px;
+            margin-left: 10px;
+            vertical-align: middle;
+            text-transform: uppercase;
+        }
+
+        /* ── Occupation table ──────────────────────── */
+
+        .occ-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.78rem;
+        }
+        .occ-table thead th {
+            padding: 10px 14px;
+            text-align: left;
+            font-size: 0.63rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+        .occ-table tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background 0.15s;
+        }
+        .occ-table tbody tr:last-child { border-bottom: none; }
+        .occ-table tbody tr:hover { background: var(--surface-2); }
+        .occ-table td {
+            padding: 10px 14px;
+            color: var(--text);
+            vertical-align: middle;
+        }
+        .occ-table .soc-col {
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+        }
+        .occ-table .wage-range { color: var(--text-muted); font-size: 0.72rem; white-space: nowrap; }
+        .lq-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+        .lq-high { background: rgba(52,211,153,0.12);  color: #34d399; }
+        .lq-med  { background: rgba(251,146,60,0.12);  color: #fb923c; }
+        .lq-low  { background: rgba(82,82,91,0.18);    color: #71717a; }
+
+        /* ── Panel (title + chart) ─────────────────── */
+
+        .panel-title {
+            font-size: 0.92rem;
             font-weight: 600;
             color: #fff;
             letter-spacing: -0.01em;
-            margin-bottom: 6px;
+            margin-bottom: 3px;
         }
 
-        .section-sub {
-            font-size: 0.8rem;
+        .panel-sub {
+            font-size: 0.76rem;
             color: var(--text-muted);
-            margin-bottom: 24px;
-            max-width: 680px;
-            line-height: 1.6;
+            margin-bottom: 14px;
+            line-height: 1.5;
         }
 
-        /* ── Charts ────────────────────────────────── */
+        /* ── Chart wraps ───────────────────────────── */
 
         .chart-wrap {
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            padding: 24px;
+            padding: 20px;
+            position: relative;
         }
 
         .chart-wrap.split {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 32px;
+            gap: 24px;
             align-items: center;
         }
+
+        /* ── Doughnut legend ───────────────────────── */
 
         .doughnut-legend {
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            max-height: 360px;
-            overflow-y: auto;
+            gap: 7px;
         }
 
         .legend-item {
             display: flex;
             align-items: center;
-            gap: 9px;
-            font-size: 0.74rem;
+            gap: 8px;
+            font-size: 0.72rem;
             color: var(--text-muted);
         }
-
         .legend-item.highlight { color: var(--text); font-weight: 500; }
 
         .legend-dot {
-            width: 9px;
-            height: 9px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
             flex-shrink: 0;
         }
 
+        /* ── Wage legend ───────────────────────────── */
+
         .wage-legend {
             display: flex;
-            gap: 20px;
-            margin-top: 10px;
+            gap: 18px;
+            margin-top: 8px;
         }
-
         .wage-legend span {
             display: flex;
             align-items: center;
-            gap: 6px;
-            font-size: 0.72rem;
+            gap: 5px;
+            font-size: 0.7rem;
         }
-
         .wage-legend .swatch {
-            width: 10px;
-            height: 10px;
+            width: 9px;
+            height: 9px;
             border-radius: 2px;
         }
 
-        /* ── Sparse data notice ────────────────────── */
+        /* ── Mini chart (inside .chart-wrap) ───────── */
 
-        .sparse-notice {
-            padding: 32px;
-            text-align: center;
+        .mini-header {
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+            margin-bottom: 14px;
+        }
+        .mini-title {
+            font-size: 0.84rem;
+            font-weight: 600;
+            color: #fff;
+            letter-spacing: -0.01em;
+            margin-bottom: 2px;
+        }
+        .mini-sub {
+            font-size: 0.7rem;
             color: var(--text-muted);
-            font-size: 0.82rem;
+            line-height: 1.45;
         }
 
-        /* ── Error ─────────────────────────────────── */
+        /* ── Sparse / error ────────────────────────── */
 
-        .error-state {
-            padding: 60px 40px;
+        .sparse-notice {
+            padding: 28px;
             text-align: center;
             color: var(--text-muted);
+            font-size: 0.8rem;
         }
 
         /* ── Back link ─────────────────────────────── */
@@ -318,21 +396,21 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            font-size: 0.78rem;
+            font-size: 0.76rem;
             color: var(--text-muted);
             text-decoration: none;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
             transition: color 0.2s;
         }
         .back-link:hover { color: var(--text); }
 
         /* ── Responsive ────────────────────────────── */
 
-        @media (max-width: 768px) {
+        @media (max-width: 900px) {
             .report { padding: 0 20px 48px; }
             .header-inner { padding: 0 20px; }
             .kpi-row { grid-template-columns: repeat(2, 1fr); }
-            .chart-wrap.split { grid-template-columns: 1fr; }
+            .chart-grid-2, .chart-grid-4, .chart-wrap.split { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -359,7 +437,7 @@
             <p class="subtitle">Macon-Bibb County Workforce Analysis</p>
             <div class="cover-actions">
                 <a id="pdfDownloadLink" class="download-btn" href="#" download>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                         <polyline points="7 10 12 15 17 10"/>
                         <line x1="12" y1="15" x2="12" y2="3"/>
@@ -394,55 +472,145 @@
             </div>
         </div>
 
-        <div class="report-section">
-            <h2 class="section-heading">Share of the Local Economy</h2>
-            <p class="section-sub" id="doughnut-sub">Employment distribution across all major industry sectors.</p>
-            <div class="chart-wrap split">
-                <div style="position:relative;height:340px;">
+        <!-- Full width: Economy share -->
+        <div style="margin-bottom:20px;">
+            <div class="panel-title">Share of the Local Economy</div>
+            <p class="panel-sub" id="doughnut-sub">Employment distribution across all major industry sectors.</p>
+            <div class="chart-wrap split" style="height:460px;">
+                <div style="position:relative;height:420px;">
                     <canvas id="doughnutChart"></canvas>
                 </div>
                 <div class="doughnut-legend" id="doughnutLegend"></div>
             </div>
         </div>
 
-        <div class="report-section">
-            <h2 class="section-heading">Breakdown by Employer Type</h2>
-            <p class="section-sub" id="empl-sub">Top sub-sectors by total employment.</p>
-            <div class="chart-wrap" id="emplWrap">
-                <div style="position:relative;">
-                    <canvas id="emplChart"></canvas>
+        <!-- Row 2: Employment + Wages -->
+        <div class="chart-grid-2">
+            <div>
+                <div class="panel-title">Breakdown by Employer Type</div>
+                <p class="panel-sub" id="empl-sub">Top sub-sectors by total employment.</p>
+                <div class="chart-wrap" id="emplWrap" style="height:360px;">
+                    <div style="position:relative;height:100%;">
+                        <canvas id="emplChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="panel-title">Highest &amp; Lowest Paying Sub-Sectors</div>
+                <p class="panel-sub" id="wage-sub">Average annual wage comparison across sub-sectors.</p>
+                <div class="chart-wrap" id="wageWrap" style="height:360px;">
+                    <div style="position:relative;height:calc(100% - 28px);">
+                        <canvas id="wageChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="report-section">
-            <h2 class="section-heading">Highest &amp; Lowest Paying Sub-Sectors</h2>
-            <p class="section-sub" id="wage-sub">Average annual wage comparison across sub-sectors.</p>
-            <div class="chart-wrap" id="wageWrap">
-                <div style="position:relative;">
-                    <canvas id="wageChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <div class="report-section">
-            <h2 class="section-heading">Sub-Sectors with the Highest Labor Demand</h2>
-            <p class="section-sub" id="demand-sub">Projected annual job openings (new positions + replacement demand).</p>
-            <div class="chart-wrap" id="demandWrap">
-                <div style="position:relative;">
+        <!-- Full width: Demand -->
+        <div style="margin-bottom:20px;">
+            <div class="panel-title">Sub-Sectors with the Highest Labor Demand</div>
+            <p class="panel-sub" id="demand-sub">Projected annual job openings (new positions + replacement demand).</p>
+            <div class="chart-wrap" id="demandWrap" style="height:340px;">
+                <div style="position:relative;height:100%;">
                     <canvas id="demandChart"></canvas>
                 </div>
+            </div>
+        </div>
+
+        <!-- Section break -->
+        <div class="section-divider">Sub-Sector Intelligence</div>
+
+        <!-- 2×2 grid: 4 new analytical charts -->
+        <div class="chart-grid-4">
+
+            <div class="chart-wrap" style="height:300px;">
+                <div class="mini-header">
+                    <div class="mini-title">Growth Trends</div>
+                    <div class="mini-sub">Projected net new jobs per year — top 5 sub-sectors</div>
+                </div>
+                <div style="position:relative;height:calc(100% - 62px);">
+                    <canvas id="growthChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-wrap" style="height:300px;">
+                <div class="mini-header">
+                    <div class="mini-title">Regional Concentration</div>
+                    <div class="mini-sub">Location quotient — LQ &gt; 1 means more concentrated than national average</div>
+                </div>
+                <div style="position:relative;height:calc(100% - 62px);">
+                    <canvas id="lqChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-wrap" style="height:300px;">
+                <div class="mini-header">
+                    <div class="mini-title">Opening Sources</div>
+                    <div class="mini-sub">How demand is composed — attrition (exits), sector movement (transfers), and growth</div>
+                </div>
+                <div style="position:relative;height:calc(100% - 62px);">
+                    <canvas id="sourcesChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-wrap" style="height:300px;">
+                <div class="mini-header">
+                    <div class="mini-title">Opening Rate</div>
+                    <div class="mini-sub">Annual openings as % of employment — hiring intensity by sub-sector</div>
+                </div>
+                <div style="position:relative;height:calc(100% - 62px);">
+                    <canvas id="rateChart"></canvas>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Section break: SOC -->
+        <div class="section-divider">In-Demand Occupations <span class="divider-tag">SOC</span></div>
+
+        <!-- Occupations: two charts -->
+        <div class="chart-grid-2" style="align-items:start; margin-bottom:20px;">
+            <div>
+                <div class="panel-title">Top Occupations by Employment</div>
+                <p class="panel-sub">Occupations most commonly found in this industry sector.</p>
+                <div class="chart-wrap" id="occEmplWrap" style="height:320px;">
+                    <div style="position:relative;height:100%;"><canvas id="occEmplChart"></canvas></div>
+                </div>
+            </div>
+            <div>
+                <div class="panel-title">Wage Range by Occupation</div>
+                <p class="panel-sub">Entry-level to experienced wage spread for top occupations.</p>
+                <div class="chart-wrap" id="occWageWrap" style="height:320px;">
+                    <div style="position:relative;height:100%;"><canvas id="occWageChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Occupation detail table -->
+        <div style="margin-bottom:40px;">
+            <div class="panel-title">Occupation Detail</div>
+            <p class="panel-sub">Key workforce metrics for occupations in this industry. LQ &gt; 1 indicates above-average regional concentration.</p>
+            <div class="chart-wrap" style="padding:0; overflow:hidden;" id="occTableWrap">
+                <table class="occ-table">
+                    <thead>
+                        <tr>
+                            <th>Occupation</th>
+                            <th class="soc-col">SOC</th>
+                            <th>Employment</th>
+                            <th>Mean Wage</th>
+                            <th>Entry → Experienced</th>
+                            <th>Annual Openings</th>
+                            <th>LQ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="occTableBody"></tbody>
+                </table>
             </div>
         </div>
 
     </div>
 
     <script>
-    // ── Industry config ──────────────────────────────────────────
-    // key   = canonical 2-digit code used in URL (?id=XX)
-    // prefixes = all NAICS 2-digit codes that belong to this sector
-    // color = accent color for charts and UI chrome
-
     const INDUSTRIES = {
         '11': { name: 'Agriculture, Forestry, Fishing & Hunting',     naicsLabel: 'NAICS 11',    prefixes: ['11'],             color: '#86efac' },
         '21': { name: 'Mining, Quarrying & Oil and Gas Extraction',    naicsLabel: 'NAICS 21',    prefixes: ['21'],             color: '#fcd34d' },
@@ -466,8 +634,36 @@
         '92': { name: 'Public Administration',                         naicsLabel: 'NAICS 92',    prefixes: ['92'],             color: '#818cf8' },
     };
 
-    // Doughnut sector merge (same as gallery.js)
     const NAICS_MERGE = { '32':'31', '33':'31', '45':'44', '49':'48' };
+
+    // BLS-based NAICS sector → SOC major group prefixes
+    const NAICS_SOC_GROUPS = {
+        '11': ['45','19','11'],
+        '21': ['47','17','51'],
+        '22': ['17','49','51'],
+        '23': ['47','49','17'],
+        '31': ['51','17','49','13'],
+        '32': ['51','17','49','13'],
+        '33': ['51','17','49','13'],
+        '42': ['41','43','53','13'],
+        '44': ['41','43','35','11'],
+        '45': ['41','43','35','11'],
+        '48': ['53','49','43'],
+        '49': ['53','49','43'],
+        '51': ['15','27','43','13'],
+        '52': ['13','43','11','15'],
+        '53': ['41','13','43'],
+        '54': ['13','17','15','19','23'],
+        '55': ['11','13','43'],
+        '56': ['43','33','37','39'],
+        '61': ['25','43','11'],
+        '62': ['29','31','21','43'],
+        '71': ['27','39','43'],
+        '72': ['35','39','41','43'],
+        '81': ['49','39','37','43'],
+        '92': ['33','25','11','43'],
+    };
+
     const NAICS_NAMES = {
         '11':'Agriculture',       '21':'Mining & Oil/Gas',
         '22':'Utilities',         '23':'Construction',
@@ -547,7 +743,6 @@
         return `rgba(${r},${g},${b},${alpha})`;
     }
 
-    // Chart defaults
     const C = { bg:'#141416', text:'#d4d4d8', muted:'#52525b', grid:'#27272a', font:"'Inter', system-ui, sans-serif" };
     Chart.defaults.color       = C.muted;
     Chart.defaults.font.family = C.font;
@@ -563,6 +758,21 @@
         }
     };
 
+    // shared chart option presets
+    const hBarOpts = (accentColor, fmtFn, tipSuffix) => ({
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        layout: { padding: { right: 56, top: 2, bottom: 2 } },
+        plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx => '  ' + fmtFn(ctx.raw) + tipSuffix } },
+            datalabels: { anchor:'end', align:'right', clamp:false, clip:false, color:C.muted, font:{ size:10, weight:'500' }, formatter: fmtFn }
+        },
+        scales: {
+            y: { grid:{ display:false }, border:{ display:false }, ticks:{ color:C.text, font:{ size:10 } } },
+            x: { display: false }
+        }
+    });
+
     // ── Boot ─────────────────────────────────────────────────────
 
     document.addEventListener('DOMContentLoaded', async () => {
@@ -572,16 +782,14 @@
 
         if (!config) {
             document.getElementById('coverTitle').textContent = 'Industry Not Found';
-            document.getElementById('narrative').textContent  = `No configuration found for id="${id}". Check the URL.`;
+            document.getElementById('narrative').textContent  = `No configuration for id="${id}".`;
             return;
         }
 
-        // Apply industry accent color to CSS variables
         const { r, g, b } = hexToRgb(config.color);
         document.documentElement.style.setProperty('--ind',     config.color);
         document.documentElement.style.setProperty('--ind-dim', `rgba(${r},${g},${b},0.14)`);
 
-        // Cover
         document.title = `${config.name} — Workforce Data`;
         document.getElementById('coverLabel').textContent = `Industry Report · ${config.naicsLabel}`;
         document.getElementById('coverTitle').textContent = config.name;
@@ -589,18 +797,22 @@
         pdfLink.href     = `pdf/${id}.pdf`;
         pdfLink.download = `${config.name} — Workforce Report.pdf`;
 
-        // Load data
-        let rows;
+        let rows, socRows = [], wageRows = [];
         try {
-            const resp = await fetch('../Data/processed/Industry_Snapshot.csv');
-            if (!resp.ok) throw new Error(resp.status);
-            ({ rows } = parseCSV(await resp.text()));
+            const [indResp, socResp, wageResp] = await Promise.all([
+                fetch('../Data/processed/Industry_Snapshot.csv'),
+                fetch('../Data/processed/Occupation_Snapshot.csv'),
+                fetch('../Data/processed/Occupation_Wages.csv'),
+            ]);
+            if (!indResp.ok) throw new Error(indResp.status);
+            ({ rows } = parseCSV(await indResp.text()));
+            if (socResp.ok)  ({ rows: socRows }  = parseCSV(await socResp.text()));
+            if (wageResp.ok) ({ rows: wageRows } = parseCSV(await wageResp.text()));
         } catch (e) {
             document.getElementById('narrative').textContent = 'Could not load data. Run via a local server: python3 -m http.server 8080';
             return;
         }
 
-        // Partition rows
         const totalRow  = rows.find(r => (r['NAICS'] || '').trim() === '');
         const totalEmpl = toNum(totalRow?.['Empl']);
         const indRows   = rows.filter(r => {
@@ -609,19 +821,17 @@
         });
 
         if (indRows.length === 0) {
-            document.getElementById('narrative').textContent = 'No data found for this industry in the current dataset.';
+            document.getElementById('narrative').textContent = 'No data found for this industry.';
             return;
         }
 
-        // KPIs
-        const indEmpl    = indRows.reduce((s, r) => s + toNum(r['Empl']), 0);
-        const indDemand  = indRows.reduce((s, r) => s + toNum(r['Total Demand']), 0);
-        const wageNum    = indRows.reduce((s, r) => s + toNum(r['Avg Ann Wages']) * toNum(r['Empl']), 0);
-        const wageDen    = indRows.reduce((s, r) => s + toNum(r['Empl']), 0);
-        const avgWage    = wageDen > 0 ? wageNum / wageDen : 0;
-        const share      = totalEmpl > 0 ? (indEmpl / totalEmpl) * 100 : 0;
+        const indEmpl  = indRows.reduce((s, r) => s + toNum(r['Empl']), 0);
+        const indDemand= indRows.reduce((s, r) => s + toNum(r['Total Demand']), 0);
+        const wageNum  = indRows.reduce((s, r) => s + toNum(r['Avg Ann Wages']) * toNum(r['Empl']), 0);
+        const wageDen  = indRows.reduce((s, r) => s + toNum(r['Empl']), 0);
+        const avgWage  = wageDen > 0 ? wageNum / wageDen : 0;
+        const share    = totalEmpl > 0 ? (indEmpl / totalEmpl) * 100 : 0;
 
-        // Sector rank (aggregate, apply NAICS_MERGE)
         const sectorMap = new Map();
         rows.filter(r => (r['NAICS'] || '').trim() !== '').forEach(r => {
             const raw  = (r['NAICS'] || '').slice(0, 2);
@@ -632,7 +842,6 @@
         const canonicalId   = NAICS_MERGE[id] || id;
         const rank          = sectorsSorted.findIndex(([c]) => c === canonicalId) + 1;
 
-        // Narrative
         document.getElementById('narrative').innerHTML =
             `<strong style="color:#fff">${config.name}</strong> accounts for about ` +
             `<span class="stat">${share.toFixed(1)}%</span> of Macon-Bibb's job market, ` +
@@ -640,77 +849,82 @@
             `Approximately <span class="stat">${fmtNum(indEmpl)} people</span> work in this sector, ` +
             `with an average annual wage of <span class="stat">${fmtDollar(Math.round(avgWage))}</span> across all sub-sectors.`;
 
-        // KPI cards
         document.getElementById('kpi-empl').textContent   = fmtNum(indEmpl);
         document.getElementById('kpi-share').textContent  = share.toFixed(1) + '%';
         document.getElementById('kpi-wage').textContent   = fmtDollar(Math.round(avgWage));
         document.getElementById('kpi-demand').textContent = fmtNum(indDemand);
 
-        // Section sub-text (dynamic industry name)
         const shortName = config.name.split(',')[0].split('&')[0].trim();
         document.getElementById('doughnut-sub').textContent =
-            `Employment distribution across all major industry sectors. ${shortName} is highlighted; all other sectors are shown in muted tones.`;
+            `${shortName} is highlighted; all other sectors shown in muted tones.`;
         document.getElementById('empl-sub').textContent =
             `Top sub-sectors by total employment within ${config.name}.`;
         document.getElementById('wage-sub').textContent =
-            `Top and bottom paying employer types by average annual wage within ${config.name}.`;
+            `Top and bottom paying sub-sectors by average annual wage.`;
         document.getElementById('demand-sub').textContent =
-            `Projected annual job openings (new positions + replacement demand) for the top sub-sectors within ${config.name}.`;
+            `Top sub-sectors by projected annual job openings.`;
 
-        try { buildDoughnut(sectorsSorted, canonicalId, config.color); } catch(e) { console.error('doughnut', e); }
-        try { buildEmplChart(indRows, config.color); }   catch(e) { console.error('empl', e); }
-        try { buildWageChart(indRows, config.color); }   catch(e) { console.error('wage', e); }
-        try { buildDemandChart(indRows, config.color); } catch(e) { console.error('demand', e); }
+        try { buildDoughnut(sectorsSorted, canonicalId, config.color); }   catch(e) { console.error('doughnut', e); }
+        try { buildEmplChart(indRows, config.color); }                      catch(e) { console.error('empl', e); }
+        try { buildWageChart(indRows, config.color); }                      catch(e) { console.error('wage', e); }
+        try { buildDemandChart(indRows, config.color); }                    catch(e) { console.error('demand', e); }
+        try { buildGrowthChart(indRows, config.color); }                    catch(e) { console.error('growth', e); }
+        try { buildLQChart(indRows, config.color); }                        catch(e) { console.error('lq', e); }
+        try { buildSourcesChart(indRows, config.color); }                   catch(e) { console.error('sources', e); }
+        try { buildRateChart(indRows, config.color); }                      catch(e) { console.error('rate', e); }
+        try { buildOccupationsSection(id, socRows, wageRows); }             catch(e) { console.error('occ', e); }
     });
 
     // ── Doughnut ─────────────────────────────────────────────────
 
     function buildDoughnut(sectorsSorted, highlightCode, accentColor) {
-        const labels = sectorsSorted.map(([c]) => NAICS_NAMES[c] || c);
-        const data   = sectorsSorted.map(([, v]) => v);
-        const total  = data.reduce((a, b) => a + b, 0);
+        const total = sectorsSorted.reduce((s, [, v]) => s + v, 0);
 
-        const colors = sectorsSorted.map(([c], i) =>
-            c === highlightCode
-                ? accentColor
-                : `hsl(240, 5%, ${15 + (i * 0.5)}%)`
+        // Merge sectors below 3% into "Other" (keep highlighted sector regardless)
+        const main  = sectorsSorted.filter(([c, v]) => c === highlightCode || (v / total) * 100 >= 2.9);
+        const small = sectorsSorted.filter(([c, v]) => c !== highlightCode && (v / total) * 100 < 2.9);
+        const otherVal = small.reduce((s, [, v]) => s + v, 0);
+        const merged = otherVal > 0 ? [...main, ['__other__', otherVal]] : main;
+
+        const labels = merged.map(([c]) => c === '__other__' ? 'Other' : (NAICS_NAMES[c] || c));
+        const data   = merged.map(([, v]) => v);
+        const colors = merged.map(([c], i) =>
+            c === highlightCode ? accentColor
+            : c === '__other__'  ? 'hsl(240, 5%, 22%)'
+            : `hsl(240, 5%, ${15 + i * 0.5}%)`
         );
 
-        // Legend
-        document.getElementById('doughnutLegend').innerHTML = sectorsSorted.map(([c, v], i) => {
+        document.getElementById('doughnutLegend').innerHTML = merged.map(([c, v], i) => {
             const isHL = c === highlightCode;
             const pct  = ((v / total) * 100).toFixed(1);
             return `<div class="legend-item ${isHL ? 'highlight' : ''}">
                 <span class="legend-dot" style="background:${colors[i]}"></span>
-                <span>${NAICS_NAMES[c] || c}</span>
+                <span>${labels[i]}</span>
                 <span style="margin-left:auto;color:${isHL ? accentColor : 'var(--text-muted)'}">${pct}%</span>
             </div>`;
         }).join('');
 
         new Chart(document.getElementById('doughnutChart'), {
             type: 'doughnut',
-            data: { labels, datasets: [{ data, backgroundColor: colors, borderColor: '#0d0d0f', borderWidth: 2 }] },
+            data: { labels, datasets: [{ data, backgroundColor: colors, borderColor: '#0d0d0f', borderWidth: 2, hoverOffset: 4 }] },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '60%',
+                responsive: true, maintainAspectRatio: false, cutout: '60%',
                 plugins: {
-                    legend:     { display: false },
-                    tooltip:    { callbacks: { label: ctx => `  ${fmtNum(ctx.raw)}  (${((ctx.raw/total)*100).toFixed(1)}%)` } },
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: ctx => `  ${fmtNum(ctx.raw)}  (${((ctx.raw/total)*100).toFixed(1)}%)` } },
                     datalabels: {
-                        display:   ctx => (ctx.dataset.data[ctx.dataIndex] / total * 100) >= 5,
+                        display:   true,
                         formatter: (v, ctx) => {
-                            const pct  = ((v / total) * 100).toFixed(0) + '%';
-                            const clr  = ctx.chart.data.datasets[0].backgroundColor[ctx.dataIndex];
-                            const lbl  = ctx.chart.data.labels[ctx.dataIndex];
+                            const pct = ((v / total) * 100).toFixed(0) + '%';
+                            const clr = ctx.chart.data.datasets[0].backgroundColor[ctx.dataIndex];
+                            const lbl = ctx.chart.data.labels[ctx.dataIndex];
                             return clr === accentColor ? `${lbl}\n${pct}` : pct;
                         },
                         color:     ctx => {
                             const clr = ctx.chart.data.datasets[0].backgroundColor[ctx.dataIndex];
                             return (clr && clr.startsWith('hsl')) ? 'rgba(255,255,255,0.4)' : '#fff';
                         },
-                        font:      { size: 10, weight: '600' },
-                        textAlign: 'center',
+                        font: { size: 10, weight: '600' }, textAlign: 'center',
                     }
                 }
             },
@@ -724,37 +938,25 @@
         const sorted = [...indRows]
             .filter(r => toNum(r['Empl']) > 0)
             .sort((a, b) => toNum(b['Empl']) - toNum(a['Empl']))
-            .slice(0, 20);
+            .slice(0, 10);
 
-        if (sorted.length === 0) {
-            document.getElementById('emplWrap').innerHTML = '<div class="sparse-notice">No employment data available for this sector.</div>';
+        if (!sorted.length) {
+            document.getElementById('emplWrap').innerHTML = '<div class="sparse-notice">No employment data available.</div>';
             return;
         }
 
         const { r, g, b } = hexToRgb(accentColor);
-        const colors = sorted.map((_, i) => `rgba(${r},${g},${b},${0.85 - (i / sorted.length) * 0.45})`);
+        const colors = sorted.map((_, i) => `rgba(${r},${g},${b},${0.9 - i / sorted.length * 0.45})`);
 
-        const canvas = document.getElementById('emplChart');
-        canvas.parentElement.style.height = Math.max(280, sorted.length * 30 + 60) + 'px';
-
-        new Chart(canvas, {
+        new Chart(document.getElementById('emplChart'), {
             type: 'bar',
             data: {
-                labels: sorted.map(r => truncate(r['Industry'], 44)),
+                labels: sorted.map(r => truncate(r['Industry'], 40)),
                 datasets: [{ data: sorted.map(r => toNum(r['Empl'])), backgroundColor: colors, borderWidth: 0, barPercentage: 0.72, categoryPercentage: 1 }]
             },
             options: {
-                indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-                layout: { padding: { right: 58, top: 4, bottom: 4 } },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: { callbacks: { label: ctx => '  ' + fmtNum(ctx.raw) + ' workers' } },
-                    datalabels: { anchor:'end', align:'right', clamp:false, clip:false, color:C.muted, font:{ size:10, weight:'500' }, formatter: fmtNum }
-                },
-                scales: {
-                    y: { grid:{ display:false }, border:{ display:false }, ticks:{ color:C.text, font:{ size:11 } } },
-                    x: { display: false }
-                }
+                ...hBarOpts(accentColor, fmtNum, ' workers'),
+                layout: { padding: { right: 56, top: 2, bottom: 2 } },
             },
             plugins: [bgPlugin, ChartDataLabels]
         });
@@ -767,55 +969,45 @@
             .filter(r => toNum(r['Avg Ann Wages']) > 0 && toNum(r['Empl']) > 0)
             .sort((a, b) => toNum(b['Avg Ann Wages']) - toNum(a['Avg Ann Wages']));
 
-        if (withWages.length === 0) {
-            document.getElementById('wageWrap').innerHTML = '<div class="sparse-notice">No wage data available for this sector.</div>';
+        if (!withWages.length) {
+            document.getElementById('wageWrap').innerHTML = '<div class="sparse-notice">No wage data available.</div>';
             return;
         }
 
-        // Adaptive: top N and bottom N based on available rows
-        const half   = Math.min(10, Math.max(3, Math.floor(withWages.length / 2)));
-        const top    = withWages.slice(0, half);
-        const bot    = [...withWages].reverse().slice(0, half).reverse();
-        // Deduplicate if overlap (small sectors)
-        const topSet = new Set(top.map(r => r['NAICS']));
-        const botDed = bot.filter(r => !topSet.has(r['NAICS']));
-        const combined = [...top, ...botDed];
-
-        const topColor = accentColor;
-        const botColor = '#f59e0b';
+        const half     = Math.min(6, Math.max(3, Math.floor(withWages.length / 2)));
+        const top      = withWages.slice(0, half);
+        const bot      = [...withWages].reverse().slice(0, half).reverse();
+        const topSet   = new Set(top.map(r => r['NAICS']));
+        const combined = [...top, ...bot.filter(r => !topSet.has(r['NAICS']))];
+        const topColor = accentColor, botColor = '#f59e0b';
         const colors   = combined.map((_, i) => i < top.length ? fadeColor(topColor, 0.8) : fadeColor(botColor, 0.8));
 
-        const canvas = document.getElementById('wageChart');
-        canvas.parentElement.style.height = Math.max(200, combined.length * 30 + 80) + 'px';
-
-        new Chart(canvas, {
+        new Chart(document.getElementById('wageChart'), {
             type: 'bar',
             data: {
-                labels: combined.map(r => truncate(r['Industry'], 44)),
+                labels: combined.map(r => truncate(r['Industry'], 40)),
                 datasets: [{ data: combined.map(r => toNum(r['Avg Ann Wages'])), backgroundColor: colors, borderWidth: 0, barPercentage: 0.72, categoryPercentage: 1 }]
             },
             options: {
                 indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-                layout: { padding: { right: 68, top: 4, bottom: 4 } },
+                layout: { padding: { right: 64, top: 2, bottom: 2 } },
                 plugins: {
                     legend: { display: false },
                     tooltip: { callbacks: { label: ctx => '  Avg. ' + fmtDollar(ctx.raw) + ' / year' } },
                     datalabels: {
                         anchor:'end', align:'right', clamp:false, clip:false,
                         color: ctx => ctx.dataIndex < top.length ? accentColor : '#f59e0b',
-                        font: { size: 10, weight: '600' },
-                        formatter: fmtDollar
+                        font: { size: 10, weight: '600' }, formatter: fmtDollar
                     }
                 },
                 scales: {
-                    y: { grid:{ display:false }, border:{ display:false }, ticks:{ color:C.text, font:{ size:11 } } },
+                    y: { grid:{ display:false }, border:{ display:false }, ticks:{ color:C.text, font:{ size:10 } } },
                     x: { display: false }
                 }
             },
             plugins: [bgPlugin, ChartDataLabels]
         });
 
-        // Color legend
         const wrap = document.getElementById('wageChart').closest('.chart-wrap');
         const leg  = document.createElement('div');
         leg.className = 'wage-legend';
@@ -831,40 +1023,306 @@
         const sorted = [...indRows]
             .filter(r => toNum(r['Total Demand']) > 0)
             .sort((a, b) => toNum(b['Total Demand']) - toNum(a['Total Demand']))
-            .slice(0, 15);
+            .slice(0, 12);
 
-        if (sorted.length === 0) {
-            document.getElementById('demandWrap').innerHTML = '<div class="sparse-notice">No demand data available for this sector.</div>';
+        if (!sorted.length) {
+            document.getElementById('demandWrap').innerHTML = '<div class="sparse-notice">No demand data available.</div>';
             return;
         }
 
         const { r, g, b } = hexToRgb(accentColor);
-        const colors = sorted.map((_, i) => `rgba(${r},${g},${b},${0.75 - (i / sorted.length) * 0.35})`);
+        const colors = sorted.map((_, i) => `rgba(${r},${g},${b},${0.8 - i / sorted.length * 0.35})`);
 
-        const canvas = document.getElementById('demandChart');
-        canvas.parentElement.style.height = Math.max(240, sorted.length * 30 + 60) + 'px';
-
-        new Chart(canvas, {
+        new Chart(document.getElementById('demandChart'), {
             type: 'bar',
             data: {
-                labels: sorted.map(r => truncate(r['Industry'], 44)),
+                labels: sorted.map(r => truncate(r['Industry'], 40)),
                 datasets: [{ data: sorted.map(r => toNum(r['Total Demand'])), backgroundColor: colors, borderWidth: 0, barPercentage: 0.72, categoryPercentage: 1 }]
+            },
+            options: hBarOpts(accentColor, fmtNum, ' openings/yr'),
+            plugins: [bgPlugin, ChartDataLabels]
+        });
+    }
+
+    // ── Growth trends ─────────────────────────────────────────────
+
+    function buildGrowthChart(indRows, accentColor) {
+        const sorted = [...indRows]
+            .filter(r => toNum(r['Empl']) > 0)
+            .sort((a, b) => toNum(b['Empl Growth']) - toNum(a['Empl Growth']))
+            .slice(0, 5);
+
+        if (!sorted.length) {
+            document.getElementById('growthChart').closest('[style]').innerHTML = '<div class="sparse-notice">No growth data.</div>';
+            return;
+        }
+
+        const values = sorted.map(r => toNum(r['Empl Growth']));
+        const colors = values.map(v => v >= 0 ? fadeColor(accentColor, 0.8) : 'rgba(251,146,60,0.75)');
+
+        new Chart(document.getElementById('growthChart'), {
+            type: 'bar',
+            data: {
+                labels: sorted.map(r => truncate(r['Industry'], 32)),
+                datasets: [{ data: values, backgroundColor: colors, borderWidth: 0, barPercentage: 0.65, categoryPercentage: 1 }]
             },
             options: {
                 indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-                layout: { padding: { right: 48, top: 4, bottom: 4 } },
+                layout: { padding: { right: 52, top: 2, bottom: 2 } },
                 plugins: {
                     legend: { display: false },
-                    tooltip: { callbacks: { label: ctx => '  ' + fmtNum(ctx.raw) + ' projected openings' } },
-                    datalabels: { anchor:'end', align:'right', clamp:false, clip:false, color:C.muted, font:{ size:10, weight:'500' }, formatter: fmtNum }
+                    tooltip: { callbacks: { label: ctx => (ctx.raw >= 0 ? '  +' : '  ') + ctx.raw + ' jobs/yr' } },
+                    datalabels: {
+                        anchor:'end', align:'right', clamp:false, clip:false,
+                        color: (ctx) => values[ctx.dataIndex] >= 0 ? accentColor : '#fb923c',
+                        font: { size: 10, weight: '600' },
+                        formatter: v => (v >= 0 ? '+' : '') + v
+                    }
                 },
                 scales: {
-                    y: { grid:{ display:false }, border:{ display:false }, ticks:{ color:C.text, font:{ size:11 } } },
+                    y: { grid:{ display:false }, border:{ display:false }, ticks:{ color:C.text, font:{ size:10 } } },
                     x: { display: false }
                 }
             },
             plugins: [bgPlugin, ChartDataLabels]
         });
+    }
+
+    // ── Location quotient ─────────────────────────────────────────
+
+    function buildLQChart(indRows, accentColor) {
+        const sorted = [...indRows]
+            .filter(r => toNum(r['LQ']) > 0 && toNum(r['Empl']) > 0)
+            .sort((a, b) => toNum(b['LQ']) - toNum(a['LQ']))
+            .slice(0, 5);
+
+        if (!sorted.length) {
+            document.getElementById('lqChart').closest('[style]').innerHTML = '<div class="sparse-notice">No LQ data.</div>';
+            return;
+        }
+
+        const values = sorted.map(r => toNum(r['LQ']));
+        const colors = values.map(v => v >= 1 ? fadeColor(accentColor, 0.8) : fadeColor('#94a3b8', 0.5));
+
+        new Chart(document.getElementById('lqChart'), {
+            type: 'bar',
+            data: {
+                labels: sorted.map(r => truncate(r['Industry'], 32)),
+                datasets: [{ data: values, backgroundColor: colors, borderWidth: 0, barPercentage: 0.65, categoryPercentage: 1 }]
+            },
+            options: {
+                indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                layout: { padding: { right: 44, top: 2, bottom: 2 } },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: ctx => '  LQ ' + ctx.raw.toFixed(2) + (ctx.raw >= 1 ? ' — above national avg' : '') } },
+                    datalabels: {
+                        anchor:'end', align:'right', clamp:false, clip:false,
+                        color: (ctx) => values[ctx.dataIndex] >= 1 ? accentColor : C.muted,
+                        font: { size: 10, weight: '600' },
+                        formatter: v => v.toFixed(2)
+                    }
+                },
+                scales: {
+                    y: { grid:{ display:false }, border:{ display:false }, ticks:{ color:C.text, font:{ size:10 } } },
+                    x: { display: false, min: 0 }
+                }
+            },
+            plugins: [bgPlugin, ChartDataLabels]
+        });
+    }
+
+    // ── Opening sources (stacked) ─────────────────────────────────
+
+    function buildSourcesChart(indRows, accentColor) {
+        const sorted = [...indRows]
+            .filter(r => toNum(r['Total Demand']) > 0)
+            .sort((a, b) => toNum(b['Total Demand']) - toNum(a['Total Demand']))
+            .slice(0, 5);
+
+        if (!sorted.length) {
+            document.getElementById('sourcesChart').closest('[style]').innerHTML = '<div class="sparse-notice">No data.</div>';
+            return;
+        }
+
+        const exits     = sorted.map(r => toNum(r['Exits']));
+        const transfers = sorted.map(r => toNum(r['Transfers']));
+        const growth    = sorted.map(r => Math.max(0, toNum(r['Empl Growth'])));
+
+        new Chart(document.getElementById('sourcesChart'), {
+            type: 'bar',
+            data: {
+                labels: sorted.map(r => truncate(r['Industry'], 32)),
+                datasets: [
+                    { label: 'Exits',     data: exits,     backgroundColor: fadeColor(accentColor, 0.85), borderWidth: 0 },
+                    { label: 'Transfers', data: transfers, backgroundColor: fadeColor(accentColor, 0.42), borderWidth: 0 },
+                    { label: 'Growth',    data: growth,    backgroundColor: 'rgba(251,191,36,0.75)',       borderWidth: 0 },
+                ]
+            },
+            options: {
+                indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                layout: { padding: { top: 2, bottom: 2 } },
+                plugins: {
+                    legend: {
+                        display: true, position: 'bottom',
+                        labels: { color: C.muted, font:{ size: 9 }, boxWidth: 9, padding: 10 }
+                    },
+                    tooltip: { mode: 'index', callbacks: { label: ctx => `  ${ctx.dataset.label}: ${ctx.raw}` } },
+                    datalabels: { display: false }
+                },
+                scales: {
+                    y: { stacked:true, grid:{ display:false }, border:{ display:false }, ticks:{ color:C.text, font:{ size:10 } } },
+                    x: { stacked:true, display:false }
+                }
+            },
+            plugins: [bgPlugin, ChartDataLabels]
+        });
+    }
+
+    // ── Opening rate ──────────────────────────────────────────────
+
+    function buildRateChart(indRows, accentColor) {
+        const sorted = [...indRows]
+            .filter(r => toNum(r['Empl']) > 0 && toNum(r['Total Demand']) > 0)
+            .map(r => ({ row: r, rate: (toNum(r['Total Demand']) / toNum(r['Empl'])) * 100 }))
+            .sort((a, b) => b.rate - a.rate)
+            .slice(0, 5);
+
+        if (!sorted.length) {
+            document.getElementById('rateChart').closest('[style]').innerHTML = '<div class="sparse-notice">No data.</div>';
+            return;
+        }
+
+        const { r, g, b } = hexToRgb(accentColor);
+        const colors = sorted.map((_, i) => `rgba(${r},${g},${b},${0.85 - i * 0.12})`);
+
+        new Chart(document.getElementById('rateChart'), {
+            type: 'bar',
+            data: {
+                labels: sorted.map(({ row }) => truncate(row['Industry'], 32)),
+                datasets: [{ data: sorted.map(d => d.rate), backgroundColor: colors, borderWidth: 0, barPercentage: 0.65, categoryPercentage: 1 }]
+            },
+            options: {
+                indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                layout: { padding: { right: 50, top: 2, bottom: 2 } },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: ctx => '  ' + ctx.raw.toFixed(1) + '% of workforce hired/yr' } },
+                    datalabels: {
+                        anchor:'end', align:'right', clamp:false, clip:false,
+                        color: C.muted, font: { size: 10, weight: '500' },
+                        formatter: v => v.toFixed(1) + '%'
+                    }
+                },
+                scales: {
+                    y: { grid:{ display:false }, border:{ display:false }, ticks:{ color:C.text, font:{ size:10 } } },
+                    x: { display: false }
+                }
+            },
+            plugins: [bgPlugin, ChartDataLabels]
+        });
+    }
+
+    // ── In-Demand Occupations (SOC) ───────────────────────────────
+
+    function buildOccupationsSection(id, socRows, wageRows) {
+        const sector    = NAICS_MERGE[id] || id;
+        const socGroups = NAICS_SOC_GROUPS[sector] || [];
+
+        const wageLookup = new Map();
+        wageRows.forEach(r => wageLookup.set((r['SOC'] || '').trim(), r));
+
+        const relevant = socRows
+            .filter(r => {
+                const grp = (r['SOC'] || '').trim().slice(0, 2);
+                return socGroups.includes(grp) && toNum(r['Empl']) > 0;
+            })
+            .sort((a, b) => toNum(b['Empl']) - toNum(a['Empl']))
+            .slice(0, 12);
+
+        if (!relevant.length) {
+            document.getElementById('occTableWrap').innerHTML = '<div class="sparse-notice">No occupation data available for this industry.</div>';
+            document.getElementById('occEmplWrap').style.display = 'none';
+            document.getElementById('occWageWrap').style.display = 'none';
+            return;
+        }
+
+        const top8 = relevant.slice(0, 8);
+
+        // Employment bar chart
+        new Chart(document.getElementById('occEmplChart'), {
+            type: 'bar',
+            data: {
+                labels: top8.map(r => truncate(r['Occupation'], 38)),
+                datasets: [{
+                    data: top8.map(r => toNum(r['Empl'])),
+                    backgroundColor: top8.map((_, i) => `rgba(99,102,241,${0.9 - i / top8.length * 0.45})`),
+                    borderWidth: 0, barPercentage: 0.72, categoryPercentage: 1
+                }]
+            },
+            options: hBarOpts('#6366f1', v => fmtNum(v), ''),
+            plugins: [bgPlugin, ChartDataLabels]
+        });
+
+        // Wage range floating bar chart
+        const wageData = top8.map(r => {
+            const w = wageLookup.get((r['SOC'] || '').trim());
+            return { occ: truncate(r['Occupation'], 38), entry: w ? toNum(w['Entry Level']) : 0, exp: w ? toNum(w['Experienced']) : 0 };
+        }).filter(r => r.entry > 0 && r.exp > 0);
+
+        if (wageData.length) {
+            new Chart(document.getElementById('occWageChart'), {
+                type: 'bar',
+                data: {
+                    labels: wageData.map(r => r.occ),
+                    datasets: [{
+                        data: wageData.map(r => [r.entry, r.exp]),
+                        backgroundColor: wageData.map((_, i) => `rgba(99,102,241,${0.85 - i / wageData.length * 0.4})`),
+                        borderWidth: 0, barPercentage: 0.6, categoryPercentage: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                    layout: { padding: { right: 62, top: 2, bottom: 2 } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: ctx => `  ${fmtDollar(ctx.raw[0])} → ${fmtDollar(ctx.raw[1])}` } },
+                        datalabels: {
+                            anchor: 'end', align: 'right', clamp: false, clip: false,
+                            color: C.muted, font: { size: 10, weight: '500' },
+                            formatter: v => fmtDollar(v[1])
+                        }
+                    },
+                    scales: {
+                        y: { grid: { display: false }, border: { display: false }, ticks: { color: C.text, font: { size: 10 } } },
+                        x: { display: false }
+                    }
+                },
+                plugins: [bgPlugin, ChartDataLabels]
+            });
+        } else {
+            document.getElementById('occWageWrap').innerHTML = '<div class="sparse-notice">No wage range data available.</div>';
+        }
+
+        // Detail table
+        document.getElementById('occTableBody').innerHTML = relevant.map(r => {
+            const soc   = (r['SOC'] || '').trim();
+            const w     = wageLookup.get(soc);
+            const lq    = toNum(r['LQ']);
+            const lqCls = lq >= 1.2 ? 'lq-high' : lq >= 0.8 ? 'lq-med' : 'lq-low';
+            const entry = w ? toNum(w['Entry Level']) : 0;
+            const exp   = w ? toNum(w['Experienced']) : 0;
+            const range = (entry > 0 && exp > 0) ? `${fmtDollar(entry)} → ${fmtDollar(exp)}` : '—';
+            return `<tr>
+                <td>${r['Occupation']}</td>
+                <td class="soc-col">${soc}</td>
+                <td>${fmtNum(toNum(r['Empl']))}</td>
+                <td>${fmtDollar(toNum(r['Mean Ann Wages2']))}</td>
+                <td class="wage-range">${range}</td>
+                <td>${fmtNum(toNum(r['Total Demand']))}</td>
+                <td><span class="lq-badge ${lqCls}">${lq > 0 ? lq.toFixed(2) : 'N/A'}</span></td>
+            </tr>`;
+        }).join('');
     }
     </script>
 </body>

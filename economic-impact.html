@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Economic Impact Frameworks — Workforce Data</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <style>
+        :root {
+            --bg:         #0d0d0f;
+            --surface:    #141416;
+            --surface-2:  #1c1c1f;
+            --border:     #27272a;
+            --border-2:   #3f3f46;
+            --text:       #d4d4d8;
+            --text-muted: #52525b;
+            --accent:     #6366f1;
+            --radius:     8px;
+            --q1: #34d399;   /* anchor    — high LQ, high EII */
+            --q2: #38bdf8;   /* target    — low LQ,  high EII */
+            --q3: #52525b;   /* baseline  — low LQ,  low EII  */
+            --q4: #fbbf24;   /* volume    — high LQ, low EII  */
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 14px;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Header ────────────────────────────────── */
+
+        .main-header {
+            background: var(--surface-2);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 300;
+        }
+
+        .header-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 40px;
+            height: 54px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .site-logo {
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .logo-accent { color: var(--accent); }
+
+        .main-nav { display: flex; align-items: center; gap: 2rem; }
+
+        .nav-link {
+            font-size: 0.8rem;
+            font-weight: 500;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color .15s;
+        }
+
+        .nav-link:hover  { color: var(--text); }
+        .nav-link.active { color: var(--accent); }
+
+        /* ── Layout ─────────────────────────────────── */
+
+        .page { max-width: 1180px; margin: 0 auto; padding: 48px 40px 80px; }
+
+        /* ── Hero ────────────────────────────────────── */
+
+        .hero {
+            margin-bottom: 48px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 36px;
+        }
+
+        .hero-eyebrow {
+            font-size: 0.62rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 10px;
+        }
+
+        .hero h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: -0.03em;
+            line-height: 1.2;
+            margin-bottom: 12px;
+        }
+
+        .hero p {
+            font-size: 1rem;
+            color: var(--text-muted);
+            max-width: 640px;
+            line-height: 1.7;
+        }
+
+        /* ── Methodology cards ────────────────────────── */
+
+        .method-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 52px;
+        }
+
+        .method-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px 26px 22px;
+        }
+
+        .method-card.lq  { border-top: 3px solid #a78bfa; }
+        .method-card.eii { border-top: 3px solid #34d399; }
+
+        .method-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: .05em;
+            margin-bottom: 14px;
+        }
+
+        .method-card.lq  .method-badge { background: rgba(167,139,250,.15); color: #a78bfa; }
+        .method-card.eii .method-badge { background: rgba(52,211,153,.15);  color: #34d399; }
+
+        .method-card h2 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .method-card p {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            line-height: 1.65;
+            margin-bottom: 16px;
+        }
+
+        .method-formula {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px 14px;
+            font-size: 0.75rem;
+            font-family: 'Menlo', 'Monaco', monospace;
+            color: var(--text);
+            margin-bottom: 16px;
+        }
+
+        .method-tiers {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .method-tier {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.75rem;
+        }
+
+        .tier-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .tier-above { color: var(--text); }
+        .tier-below { color: var(--text-muted); }
+
+        /* ── Quadrant chart ───────────────────────────── */
+
+        .section-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+
+        .section-sub {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+
+        .quadrant-outer {
+            position: relative;
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+            margin-bottom: 52px;
+        }
+
+        .quadrant-chart-wrap {
+            flex: 1;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+        }
+
+        .quadrant-axis-y {
+            position: absolute;
+            left: -28px;
+            top: 50%;
+            transform: translateY(-50%) rotate(-90deg);
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .quadrant-axis-x {
+            text-align: center;
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        .quadrant-legend-panel {
+            width: 220px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .q-leg-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 12px 14px;
+        }
+
+        .q-leg-title {
+            font-size: 0.72rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .q-leg-desc {
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            line-height: 1.55;
+        }
+
+        /* ── Detail panel ─────────────────────────────── */
+
+        .detail-panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px 22px;
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            margin-bottom: 52px;
+            min-height: 80px;
+            transition: border-color .2s;
+        }
+
+        .detail-panel.active { border-color: var(--border-2); }
+
+        .detail-name {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #fff;
+            min-width: 200px;
+        }
+
+        .detail-naics {
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .detail-metrics {
+            display: flex;
+            gap: 28px;
+            flex-wrap: wrap;
+        }
+
+        .detail-metric { display: flex; flex-direction: column; gap: 2px; }
+        .detail-metric-label { font-size: 0.62rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); }
+        .detail-metric-value { font-size: 1rem; font-weight: 700; color: #fff; }
+
+        .detail-link {
+            margin-left: auto;
+            padding: 7px 14px;
+            background: var(--accent);
+            color: #fff;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: opacity .15s;
+        }
+
+        .detail-link:hover { opacity: .85; }
+
+        .detail-placeholder {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        /* ── Slope chart ──────────────────────────────── */
+
+        .slope-outer {
+            display: flex;
+            gap: 0;
+            align-items: flex-start;
+        }
+
+        .slope-col-label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            padding-bottom: 12px;
+            text-align: center;
+        }
+
+        #slopeChart {
+            width: 100%;
+            display: block;
+            overflow: visible;
+        }
+
+        /* ── Quadrant tag chips ───────────────────────── */
+
+        .q-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: .05em;
+            text-transform: uppercase;
+        }
+
+        @media (max-width: 900px) {
+            .page { padding: 32px 20px 60px; }
+            .header-inner { padding: 0 20px; }
+            .method-grid { grid-template-columns: 1fr; }
+            .quadrant-outer { flex-direction: column; }
+            .quadrant-legend-panel { width: 100%; flex-direction: row; flex-wrap: wrap; }
+            .q-leg-card { flex: 1; min-width: 160px; }
+        }
+    </style>
+</head>
+<body>
+
+<header class="main-header">
+    <div class="header-inner">
+        <a href="index.html" class="site-logo">WORKFORCE <span class="logo-accent">data</span></a>
+        <nav class="main-nav">
+            <a href="index.html" class="nav-link">Reports</a>
+            <a href="economic-impact.html" class="nav-link active">Impact Analysis</a>
+            <a href="gallery.html" class="nav-link">Gallery</a>
+        </nav>
+    </div>
+</header>
+
+<div class="page">
+
+    <!-- ── Hero ─────────────────────────────────────── -->
+
+    <div class="hero">
+        <div class="hero-eyebrow">Macon-Bibb County · Workforce Analysis</div>
+        <h1>Two Ways to Measure Economic Impact</h1>
+        <p>Location Quotient and Economic Impact Index answer different questions about an industry. Understanding both reveals which sectors are true anchors — and which are large without being transformative.</p>
+    </div>
+
+    <!-- ── Methodology cards ─────────────────────────── -->
+
+    <div class="method-grid">
+        <div class="method-card lq">
+            <div class="method-badge">LQ</div>
+            <h2>Location Quotient</h2>
+            <p>Measures how <strong style="color:#fff">concentrated</strong> a sector is in Macon relative to the national average. An LQ above 1.0 means Macon employs a disproportionately large share of workers in that sector compared to the US as a whole — a local specialty.</p>
+            <div class="method-formula">LQ = (Macon employment share) ÷ (national employment share)</div>
+            <div class="method-tiers">
+                <div class="method-tier tier-above"><div class="tier-dot" style="background:#a78bfa"></div><span>LQ &gt; 1.0 — sector is more concentrated here than nationally</span></div>
+                <div class="method-tier tier-below"><div class="tier-dot" style="background:var(--border-2)"></div><span>LQ = 1.0 — matches the national industry mix</span></div>
+                <div class="method-tier tier-below"><div class="tier-dot" style="background:var(--border-2)"></div><span>LQ &lt; 1.0 — underrepresented locally</span></div>
+            </div>
+        </div>
+
+        <div class="method-card eii">
+            <div class="method-badge">EII</div>
+            <h2>Economic Impact Index</h2>
+            <p>Measures the <strong style="color:#fff">per-job economic quality</strong> of a sector — how much above or below the regional wage baseline it sits, adjusted for its growth trajectory. EII above 1.0 means the average job in this sector pays better than the regional norm and/or is growing.</p>
+            <div class="method-formula">EII = (avg sector wage ÷ regional avg wage) × (1 + growth rate)</div>
+            <div class="method-tiers">
+                <div class="method-tier tier-above"><div class="tier-dot" style="background:#34d399"></div><span>EII &gt; 1.0 — above-average economic value per job</span></div>
+                <div class="method-tier tier-below"><div class="tier-dot" style="background:var(--border-2)"></div><span>EII = 1.0 — matches the regional wage baseline</span></div>
+                <div class="method-tier tier-below"><div class="tier-dot" style="background:var(--border-2)"></div><span>EII &lt; 1.0 — below-average economic value per job</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Quadrant chart ──────────────────────────────── -->
+
+    <div class="section-title">All Industries: Specialization vs. Economic Quality</div>
+    <p class="section-sub">Each bubble is one of Macon's 20 industry sectors. Bubble size = total employment. Hover to inspect; click to open the full industry report.</p>
+
+    <div class="quadrant-outer" style="position:relative; padding-left: 36px;">
+        <span class="quadrant-axis-y">Economic Impact Index (EII)</span>
+        <div style="flex:1;">
+            <div class="quadrant-chart-wrap">
+                <canvas id="quadrantChart" height="520"></canvas>
+                <div class="quadrant-axis-x">Location Quotient (LQ) →</div>
+            </div>
+        </div>
+        <div class="quadrant-legend-panel">
+            <div class="q-leg-card" style="border-left: 3px solid var(--q1);">
+                <div class="q-leg-title" style="color:var(--q1)">Anchor Industries</div>
+                <div class="q-leg-desc">High LQ <em>and</em> high EII. Locally distinctive <em>and</em> well-paying. Core economic strengths to protect and build on.</div>
+            </div>
+            <div class="q-leg-card" style="border-left: 3px solid var(--q2);">
+                <div class="q-leg-title" style="color:var(--q2)">Growth Targets</div>
+                <div class="q-leg-desc">High EII but low LQ. High-quality jobs that Macon is underweight in relative to the nation. Prime attraction candidates.</div>
+            </div>
+            <div class="q-leg-card" style="border-left: 3px solid var(--q4);">
+                <div class="q-leg-title" style="color:var(--q4)">Volume Employers</div>
+                <div class="q-leg-desc">High LQ but low EII. Sectors concentrated here but with below-average wages. Important for employment volume, less so for economic uplift.</div>
+            </div>
+            <div class="q-leg-card" style="border-left: 3px solid var(--q3);">
+                <div class="q-leg-title" style="color:var(--text-muted)">Below Baseline</div>
+                <div class="q-leg-desc">Low on both metrics. Neither locally specialized nor high economic value per job.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- hover detail panel -->
+    <div class="detail-panel" id="detailPanel">
+        <span class="detail-placeholder">Hover over any bubble to see details</span>
+    </div>
+
+    <!-- ── Rank divergence ──────────────────────────── -->
+
+    <div class="section-title">Where the Rankings Diverge</div>
+    <p class="section-sub">Each line connects the same industry across both ranking systems. Lines that cross steeply reveal where specialization and economic quality tell very different stories.</p>
+
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding: 24px 20px;">
+        <div style="display:grid; grid-template-columns:1fr 80px 1fr; gap:0; margin-bottom:12px;">
+            <div style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#a78bfa;padding-left:8px;">Ranked by LQ</div>
+            <div></div>
+            <div style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#34d399;text-align:right;padding-right:8px;">Ranked by EII</div>
+        </div>
+        <svg id="slopeChart" style="width:100%;overflow:visible;"></svg>
+    </div>
+
+</div><!-- /page -->
+
+<script>
+/* ── Shared helpers ──────────────────────────────────────────── */
+
+function toNum(v) {
+    const n = parseFloat(String(v).replace(/,/g, '').trim());
+    return isNaN(n) ? 0 : n;
+}
+
+function fmtNum(n) {
+    if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+    return Math.round(n).toLocaleString();
+}
+
+function fmtDollar(n) {
+    if (n >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'M';
+    if (n >= 1e3) return '$' + Math.round(n / 1e3) + 'K';
+    return '$' + Math.round(n).toLocaleString();
+}
+
+function parseCSV(text) {
+    const lines = text.trim().split('\n');
+    const headers = lines[0].split(',').map(h => h.trim());
+    return lines.slice(1).map(line => {
+        const vals = [];
+        let cur = '', inQ = false;
+        for (const ch of line) {
+            if (ch === '"') { inQ = !inQ; }
+            else if (ch === ',' && !inQ) { vals.push(cur.trim()); cur = ''; }
+            else { cur += ch; }
+        }
+        vals.push(cur.trim());
+        const obj = {};
+        headers.forEach((h, i) => obj[h] = vals[i] ?? '');
+        return obj;
+    });
+}
+
+/* ── Industry config ─────────────────────────────────────────── */
+
+const INDUSTRIES = {
+    '11': { name: 'Agriculture, Forestry, Fishing & Hunting',     short: 'Agriculture',          naicsLabel: 'NAICS 11',    prefixes: ['11'],           color: '#86efac' },
+    '21': { name: 'Mining, Quarrying & Oil and Gas Extraction',    short: 'Mining & Oil/Gas',      naicsLabel: 'NAICS 21',    prefixes: ['21'],           color: '#fcd34d' },
+    '22': { name: 'Utilities',                                     short: 'Utilities',             naicsLabel: 'NAICS 22',    prefixes: ['22'],           color: '#67e8f9' },
+    '23': { name: 'Construction',                                  short: 'Construction',          naicsLabel: 'NAICS 23',    prefixes: ['23'],           color: '#fdba74' },
+    '31': { name: 'Manufacturing',                                 short: 'Manufacturing',         naicsLabel: 'NAICS 31–33', prefixes: ['31','32','33'], color: '#93c5fd' },
+    '42': { name: 'Wholesale Trade',                               short: 'Wholesale',             naicsLabel: 'NAICS 42',    prefixes: ['42'],           color: '#5eead4' },
+    '44': { name: 'Retail Trade',                                  short: 'Retail',                naicsLabel: 'NAICS 44–45', prefixes: ['44','45'],      color: '#f9a8d4' },
+    '48': { name: 'Transportation & Warehousing',                  short: 'Transportation',        naicsLabel: 'NAICS 48–49', prefixes: ['48','49'],      color: '#fca5a5' },
+    '51': { name: 'Information',                                   short: 'Information',           naicsLabel: 'NAICS 51',    prefixes: ['51'],           color: '#c4b5fd' },
+    '52': { name: 'Finance & Insurance',                           short: 'Finance',               naicsLabel: 'NAICS 52',    prefixes: ['52'],           color: '#7dd3fc' },
+    '53': { name: 'Real Estate & Rental and Leasing',              short: 'Real Estate',           naicsLabel: 'NAICS 53',    prefixes: ['53'],           color: '#6ee7b7' },
+    '54': { name: 'Professional, Scientific & Technical Services', short: 'Prof. Services',        naicsLabel: 'NAICS 54',    prefixes: ['54'],           color: '#a5b4fc' },
+    '55': { name: 'Management of Companies & Enterprises',         short: 'Management',            naicsLabel: 'NAICS 55',    prefixes: ['55'],           color: '#94a3b8' },
+    '56': { name: 'Administrative & Support Services',             short: 'Admin & Support',       naicsLabel: 'NAICS 56',    prefixes: ['56'],           color: '#fde68a' },
+    '61': { name: 'Educational Services',                          short: 'Education',             naicsLabel: 'NAICS 61',    prefixes: ['61'],           color: '#bef264' },
+    '62': { name: 'Health Care & Social Assistance',               short: 'Healthcare',            naicsLabel: 'NAICS 62',    prefixes: ['62'],           color: '#34d399' },
+    '71': { name: 'Arts, Entertainment & Recreation',              short: 'Arts & Entertainment',  naicsLabel: 'NAICS 71',    prefixes: ['71'],           color: '#f9a8d4' },
+    '72': { name: 'Accommodation & Food Services',                 short: 'Food & Hospitality',    naicsLabel: 'NAICS 72',    prefixes: ['72'],           color: '#fb923c' },
+    '81': { name: 'Other Services',                                short: 'Other Services',        naicsLabel: 'NAICS 81',    prefixes: ['81'],           color: '#a1a1aa' },
+    '92': { name: 'Public Administration',                         short: 'Public Admin',          naicsLabel: 'NAICS 92',    prefixes: ['92'],           color: '#818cf8' },
+};
+
+/* ── Quadrant chart plugin ───────────────────────────────────── */
+
+const quadrantPlugin = {
+    id: 'quadrant',
+    beforeDraw(chart) {
+        const { ctx, chartArea: { left, right, top, bottom }, scales: { x, y } } = chart;
+        const mx = x.getPixelForValue(1.0);
+        const my = y.getPixelForValue(1.0);
+
+        ctx.save();
+
+        // Quadrant fills
+        const fills = [
+            { x: mx, y: top,    w: right - mx,  h: my - top,      color: 'rgba(52,211,153,0.055)'  }, // Q1 anchor
+            { x: left, y: top,  w: mx - left,   h: my - top,      color: 'rgba(56,189,248,0.055)'  }, // Q2 target
+            { x: left, y: my,   w: mx - left,   h: bottom - my,   color: 'rgba(82,82,91,0.04)'     }, // Q3 baseline
+            { x: mx,   y: my,   w: right - mx,  h: bottom - my,   color: 'rgba(251,191,36,0.055)'  }, // Q4 volume
+        ];
+        fills.forEach(f => {
+            ctx.fillStyle = f.color;
+            ctx.fillRect(f.x, f.y, f.w, f.h);
+        });
+
+        // Divider lines
+        ctx.save();
+        ctx.strokeStyle = 'rgba(63,63,70,0.9)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.moveTo(mx, top); ctx.lineTo(mx, bottom);
+        ctx.moveTo(left, my); ctx.lineTo(right, my);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+
+        // Axis reference labels
+        ctx.font = '500 9.5px Inter, system-ui';
+        ctx.fillStyle = 'rgba(113,113,122,0.7)';
+        ctx.textAlign = 'center';
+        ctx.fillText('LQ = 1.0', mx, bottom + 14);
+        ctx.save();
+        ctx.translate(left - 6, my);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText('EII = 1.0', 0, 0);
+        ctx.restore();
+
+        // Quadrant corner labels
+        const qLabels = [
+            { px: right - 8,  py: top + 14,    text: 'Anchor Industries', color: 'rgba(52,211,153,0.75)',  align: 'right'  },
+            { px: left + 8,   py: top + 14,    text: 'Growth Targets',    color: 'rgba(56,189,248,0.75)',  align: 'left'   },
+            { px: right - 8,  py: bottom - 8,  text: 'Volume Employers',  color: 'rgba(251,191,36,0.75)',  align: 'right'  },
+            { px: left + 8,   py: bottom - 8,  text: 'Below Baseline',    color: 'rgba(113,113,122,0.55)', align: 'left'   },
+        ];
+        ctx.font = '600 9px Inter, system-ui';
+        qLabels.forEach(l => {
+            ctx.fillStyle = l.color;
+            ctx.textAlign = l.align;
+            ctx.fillText(l.text, l.px, l.py);
+        });
+
+        ctx.restore();
+    }
+};
+
+/* ── Bubble label plugin ─────────────────────────────────────── */
+
+const bubbleLabelPlugin = {
+    id: 'bubbleLabels',
+    afterDatasetsDraw(chart) {
+        const ctx2d = chart.ctx;
+        const meta  = chart.getDatasetMeta(0);
+        const pts   = meta.data;
+
+        ctx2d.save();
+        ctx2d.font = '500 9px Inter, system-ui';
+        ctx2d.textAlign = 'center';
+        ctx2d.textBaseline = 'middle';
+
+        pts.forEach((pt, i) => {
+            const d = chart.data.datasets[0].data[i];
+            if (pt.options.radius < 14) return;
+            ctx2d.fillStyle = 'rgba(0,0,0,0.7)';
+            ctx2d.fillText(d._short, pt.x, pt.y);
+        });
+        ctx2d.restore();
+    }
+};
+
+/* ── Main init ───────────────────────────────────────────────── */
+
+async function init() {
+    const resp = await fetch('Data/processed/Industry_Snapshot.csv');
+    const text = await resp.text();
+    const rows = parseCSV(text);
+
+    const allIndRows = rows.filter(r => (r['NAICS'] || '').trim() !== '');
+    const totalWageBill = allIndRows.reduce((s, r) => s + toNum(r['Avg Ann Wages']) * toNum(r['Empl']), 0);
+    const totalAllEmpl  = allIndRows.reduce((s, r) => s + toNum(r['Empl']), 0);
+    const regionalAvgWage = totalAllEmpl > 0 ? totalWageBill / totalAllEmpl : 1;
+
+    const industryData = [];
+
+    for (const [id, cfg] of Object.entries(INDUSTRIES)) {
+        const ir = rows.filter(r => {
+            const code = (r['NAICS'] || '').trim();
+            return code && cfg.prefixes.some(p => code.startsWith(p));
+        });
+        if (!ir.length) continue;
+
+        const empl   = ir.reduce((s, r) => s + toNum(r['Empl']), 0);
+        const wageN  = ir.reduce((s, r) => s + toNum(r['Avg Ann Wages']) * toNum(r['Empl']), 0);
+        const avgWage = empl > 0 ? wageN / empl : 0;
+
+        // Employment-weighted LQ (exclude zero-LQ rows)
+        const lqRows  = ir.filter(r => toNum(r['LQ']) > 0);
+        const lqWN    = lqRows.reduce((s, r) => s + toNum(r['LQ']) * toNum(r['Empl']), 0);
+        const lqWD    = lqRows.reduce((s, r) => s + toNum(r['Empl']), 0);
+        const lq      = lqWD > 0 ? lqWN / lqWD : 0;
+
+        const growth  = ir.length ? ir.reduce((s, r) => s + toNum(r['Ann % Growth']), 0) / ir.length : 0;
+        const eii     = (avgWage / regionalAvgWage) * (1 + Math.max(growth, -0.5));
+
+        industryData.push({ id, cfg, empl, avgWage, lq, growth, eii });
+    }
+
+    buildQuadrantChart(industryData);
+    buildSlopeChart(industryData);
+}
+
+/* ── Quadrant scatter chart ──────────────────────────────────── */
+
+function buildQuadrantChart(data) {
+    const minR = 6, maxR = 38;
+    const maxEmpl = Math.max(...data.map(d => d.empl));
+
+    const chartData = data.map(d => {
+        const r = minR + (maxR - minR) * Math.sqrt(d.empl / maxEmpl);
+        const q = d.lq >= 1 && d.eii >= 1 ? 'anchor'
+                : d.lq <  1 && d.eii >= 1 ? 'target'
+                : d.lq >= 1 && d.eii <  1 ? 'volume'
+                :                            'baseline';
+        const qColor = { anchor: '#34d399', target: '#38bdf8', volume: '#fbbf24', baseline: '#52525b' }[q];
+        return {
+            x: d.lq,
+            y: d.eii,
+            r,
+            _id: d.id,
+            _name: d.cfg.name,
+            _short: d.cfg.short,
+            _naics: d.cfg.naicsLabel,
+            _empl: d.empl,
+            _avgWage: d.avgWage,
+            _growth: d.growth,
+            _color: d.cfg.color,
+            _qColor: qColor,
+            _q: q,
+        };
+    });
+
+    const canvas = document.getElementById('quadrantChart');
+    const chart = new Chart(canvas, {
+        type: 'bubble',
+        data: {
+            datasets: [{
+                data: chartData,
+                backgroundColor: chartData.map(d => d._color + 'cc'),
+                borderColor:     chartData.map(d => d._color),
+                borderWidth: 1.5,
+                hoverBorderWidth: 2.5,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: { duration: 600, easing: 'easeOutQuart' },
+            scales: {
+                x: {
+                    title: { display: false },
+                    min: 0,
+                    grid: { color: 'rgba(39,39,42,0.8)' },
+                    ticks: { color: '#52525b', font: { size: 10 }, callback: v => v.toFixed(1) + '×' },
+                    border: { color: '#27272a' },
+                },
+                y: {
+                    title: { display: false },
+                    min: 0,
+                    grid: { color: 'rgba(39,39,42,0.8)' },
+                    ticks: { color: '#52525b', font: { size: 10 }, callback: v => v.toFixed(2) + '×' },
+                    border: { color: '#27272a' },
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                datalabels: { display: false },
+                tooltip: {
+                    backgroundColor: '#1c1c1f',
+                    borderColor: '#3f3f46',
+                    borderWidth: 1,
+                    titleColor: '#fff',
+                    bodyColor: '#a1a1aa',
+                    padding: 12,
+                    callbacks: {
+                        title: items => items[0].raw._name,
+                        label: item => {
+                            const d = item.raw;
+                            return [
+                                `  LQ:     ${d.x.toFixed(2)}×  (${d.x >= 1 ? 'Macon specialty' : 'below national avg'})`,
+                                `  EII:    ${d.y.toFixed(2)}×  (${d.y >= 1 ? 'above' : 'below'} regional baseline)`,
+                                `  Employment: ${fmtNum(d._empl)}`,
+                                `  Avg wage:   ${fmtDollar(Math.round(d._avgWage))}`,
+                            ];
+                        }
+                    }
+                }
+            },
+            onClick(evt, elements) {
+                if (elements.length) {
+                    const d = chart.data.datasets[0].data[elements[0].index];
+                    window.location.href = `reports/industry.html?id=${d._id}`;
+                }
+            },
+            onHover(evt, elements) {
+                canvas.style.cursor = elements.length ? 'pointer' : 'default';
+                const panel = document.getElementById('detailPanel');
+                if (!elements.length) {
+                    panel.classList.remove('active');
+                    panel.innerHTML = '<span class="detail-placeholder">Hover over any bubble to see details</span>';
+                    return;
+                }
+                const d = chart.data.datasets[0].data[elements[0].index];
+                const qLabel = { anchor: 'Anchor Industry', target: 'Growth Target', volume: 'Volume Employer', baseline: 'Below Baseline' }[d._q];
+                const qColor = { anchor: 'var(--q1)', target: 'var(--q2)', volume: 'var(--q4)', baseline: 'var(--q3)' }[d._q];
+                const gSign  = d._growth >= 0 ? '+' : '';
+                panel.classList.add('active');
+                panel.innerHTML = `
+                    <div>
+                        <div class="detail-name">${d._name}</div>
+                        <div class="detail-naics">${d._naics} &nbsp;·&nbsp; <span class="q-tag" style="background:${qColor}22;color:${qColor}">${qLabel}</span></div>
+                    </div>
+                    <div class="detail-metrics">
+                        <div class="detail-metric">
+                            <span class="detail-metric-label">Location Quotient</span>
+                            <span class="detail-metric-value" style="color:#a78bfa">${d.x.toFixed(2)}×</span>
+                        </div>
+                        <div class="detail-metric">
+                            <span class="detail-metric-label">Economic Impact</span>
+                            <span class="detail-metric-value" style="color:#34d399">${d.y.toFixed(2)}×</span>
+                        </div>
+                        <div class="detail-metric">
+                            <span class="detail-metric-label">Employment</span>
+                            <span class="detail-metric-value">${fmtNum(d._empl)}</span>
+                        </div>
+                        <div class="detail-metric">
+                            <span class="detail-metric-label">Avg Annual Wage</span>
+                            <span class="detail-metric-value">${fmtDollar(Math.round(d._avgWage))}</span>
+                        </div>
+                        <div class="detail-metric">
+                            <span class="detail-metric-label">Job Growth (ann.)</span>
+                            <span class="detail-metric-value" style="color:${d._growth >= 0 ? '#34d399' : '#f87171'}">${gSign}${(d._growth * 100).toFixed(2)}%</span>
+                        </div>
+                    </div>
+                    <a class="detail-link" href="reports/industry.html?id=${d._id}">Full Report →</a>
+                `;
+            }
+        },
+        plugins: [quadrantPlugin, bubbleLabelPlugin],
+    });
+}
+
+/* ── Slope chart ──────────────────────────────────────────────── */
+
+function buildSlopeChart(data) {
+    const byLQ  = [...data].sort((a, b) => b.lq - a.lq);
+    const byEII = [...data].sort((a, b) => b.eii - a.eii);
+
+    const rankLQ  = {};
+    const rankEII = {};
+    byLQ.forEach((d, i)  => rankLQ[d.id]  = i + 1);
+    byEII.forEach((d, i) => rankEII[d.id] = i + 1);
+
+    const n    = data.length;
+    const rowH = 26;
+    const totalH = n * rowH;
+    const svgW = 800;
+    const leftX  = 220;   // right edge of LQ names
+    const rightX = svgW - 220; // left edge of EII names
+    const lineL  = leftX + 10;
+    const lineR  = rightX - 10;
+
+    function yForRank(rank) {
+        return (rank - 1) * rowH + rowH / 2;
+    }
+
+    const svg = document.getElementById('slopeChart');
+    svg.setAttribute('viewBox', `0 0 ${svgW} ${totalH}`);
+    svg.setAttribute('height', totalH);
+
+    let html = '';
+
+    // Draw connecting lines first (behind text)
+    data.forEach(d => {
+        const lqRank  = rankLQ[d.id];
+        const eiiRank = rankEII[d.id];
+        const y1 = yForRank(lqRank);
+        const y2 = yForRank(eiiRank);
+        const delta = lqRank - eiiRank; // positive = EII rank is better (lower number = higher rank)
+
+        let stroke, opacity;
+        if (Math.abs(delta) <= 1) {
+            stroke = '#3f3f46'; opacity = 0.8;
+        } else if (delta > 0) {
+            // EII rank better than LQ rank → undervalued by LQ → teal
+            stroke = '#34d399';
+            opacity = Math.min(0.9, 0.3 + Math.abs(delta) * 0.08);
+        } else {
+            // EII rank worse than LQ rank → overvalued by LQ → amber/orange
+            stroke = '#fbbf24';
+            opacity = Math.min(0.9, 0.3 + Math.abs(delta) * 0.08);
+        }
+
+        const cx = (lineL + lineR) / 2;
+        html += `<path d="M ${lineL} ${y1} C ${cx} ${y1}, ${cx} ${y2}, ${lineR} ${y2}"
+            stroke="${stroke}" stroke-width="${Math.min(3, 1 + Math.abs(delta) * 0.25)}"
+            fill="none" opacity="${opacity}"/>`;
+    });
+
+    // LQ rank column (left)
+    byLQ.forEach((d, i) => {
+        const y = yForRank(i + 1);
+        const eiiRank = rankEII[d.id];
+        const delta = (i + 1) - eiiRank;
+        let rankColor = '#52525b';
+        if (Math.abs(delta) > 3) rankColor = delta > 0 ? '#34d399' : '#fbbf24';
+
+        html += `
+            <text x="${leftX - 6}" y="${y + 5}" text-anchor="end"
+                  font-family="Inter,system-ui,sans-serif" font-size="11" font-weight="500"
+                  fill="${d.cfg.color}">${d.cfg.short}</text>
+            <text x="${leftX + 6}" y="${y + 5}" text-anchor="start"
+                  font-family="Inter,system-ui,sans-serif" font-size="10" font-weight="600"
+                  fill="${rankColor}">#${i + 1}</text>
+        `;
+    });
+
+    // EII rank column (right)
+    byEII.forEach((d, i) => {
+        const y = yForRank(i + 1);
+        const lqRank = rankLQ[d.id];
+        const delta = lqRank - (i + 1);
+        let rankColor = '#52525b';
+        if (Math.abs(delta) > 3) rankColor = delta > 0 ? '#34d399' : '#fbbf24';
+
+        html += `
+            <text x="${rightX - 6}" y="${y + 5}" text-anchor="end"
+                  font-family="Inter,system-ui,sans-serif" font-size="10" font-weight="600"
+                  fill="${rankColor}">#${i + 1}</text>
+            <text x="${rightX + 6}" y="${y + 5}" text-anchor="start"
+                  font-family="Inter,system-ui,sans-serif" font-size="11" font-weight="500"
+                  fill="${d.cfg.color}">${d.cfg.short}</text>
+        `;
+    });
+
+    // Center delta labels for large movers
+    data.forEach(d => {
+        const lqRank  = rankLQ[d.id];
+        const eiiRank = rankEII[d.id];
+        const delta   = lqRank - eiiRank;
+        if (Math.abs(delta) < 4) return;
+
+        const y1 = yForRank(lqRank);
+        const y2 = yForRank(eiiRank);
+        const cy = (y1 + y2) / 2;
+        const cx = (lineL + lineR) / 2;
+        const color = delta > 0 ? '#34d399' : '#fbbf24';
+        const label = delta > 0 ? `▲${delta}` : `▼${Math.abs(delta)}`;
+
+        html += `
+            <rect x="${cx - 16}" y="${cy - 8}" width="32" height="16" rx="4"
+                  fill="#141416" stroke="#27272a" stroke-width="1"/>
+            <text x="${cx}" y="${cy + 5}" text-anchor="middle"
+                  font-family="Inter,system-ui,sans-serif" font-size="9" font-weight="700"
+                  fill="${color}">${label}</text>
+        `;
+    });
+
+    svg.innerHTML = html;
+}
+
+/* ── Boot ────────────────────────────────────────────────────── */
+
+init().catch(err => {
+    document.querySelector('.page').insertAdjacentHTML('afterbegin',
+        `<div style="padding:20px;color:#f87171;background:#1c1c1f;border-radius:8px;margin-bottom:24px;">
+            Could not load data. Run via a local server: <code>python3 -m http.server 8080</code>
+        </div>`
+    );
+    console.error(err);
+});
+</script>
+</body>
+</html>

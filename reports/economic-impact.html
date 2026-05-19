@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Economic Impact Analysis — Workforce Data</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <style>
+        :root {
+            --bg:         #0d0d0f;
+            --surface:    #141416;
+            --surface-2:  #1c1c1f;
+            --border:     #27272a;
+            --border-2:   #3f3f46;
+            --text:       #d4d4d8;
+            --text-muted: #52525b;
+            --accent:     #6366f1;
+            --accent-dim: rgba(99,102,241,0.12);
+            --radius:     8px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 14px;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Header ─────────────────────────────────── */
+
+        .main-header {
+            background: var(--surface-2);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 300;
+        }
+
+        .header-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 40px;
+            height: 54px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .site-logo {
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            text-decoration: none;
+            color: var(--text);
+        }
+
+        .logo-accent { font-weight: 300; color: var(--text-muted); letter-spacing: 1.5px; }
+
+        .main-nav { display: flex; align-items: center; gap: 2rem; }
+
+        .nav-link {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-decoration: none;
+            letter-spacing: 0.02em;
+            transition: color 0.2s;
+        }
+        .nav-link:hover  { color: var(--text); }
+        .nav-link.active { color: var(--accent); }
+
+        /* ── Page ─────────────────────────────────────── */
+
+        .report {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 40px 80px;
+        }
+
+        .back-link {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: color .15s;
+        }
+        .back-link:hover { color: var(--text); }
+
+        /* ── Cover ──────────────────────────────────── */
+
+        .report-cover {
+            padding: 40px 0 32px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 40px;
+        }
+
+        .cover-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cover-label::before {
+            content: '';
+            display: inline-block;
+            width: 18px;
+            height: 2px;
+            background: var(--accent);
+            border-radius: 1px;
+        }
+
+        .report-cover h1 {
+            font-size: 1.9rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+
+        .report-cover .subtitle {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            max-width: 620px;
+            line-height: 1.7;
+        }
+
+        /* ── Section ─────────────────────────────────── */
+
+        .section-wrap { margin-bottom: 44px; }
+
+        .section-title {
+            font-size: 0.62rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            padding-top: 10px;
+            margin-bottom: 20px;
+        }
+
+        /* ── Methodology cards ─────────────────────── */
+
+        .method-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+        }
+
+        .method-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px 22px 18px;
+        }
+
+        .method-card.jqi { border-top: 3px solid #34d399; }
+        .method-card.eci { border-top: 3px solid #fb923c; }
+
+        .method-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .method-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2px 8px;
+            border-radius: 5px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: .05em;
+            flex-shrink: 0;
+        }
+
+        .method-card.jqi .method-badge { background: rgba(52,211,153,.15);  color: #34d399; }
+        .method-card.eci .method-badge { background: rgba(251,146,60,.15);  color: #fb923c; }
+
+        .method-card h3 {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .method-card p {
+            font-size: 0.76rem;
+            color: var(--text-muted);
+            line-height: 1.65;
+            margin-bottom: 12px;
+        }
+
+        .method-formula {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            padding: 8px 12px;
+            font-size: 0.7rem;
+            font-family: 'Menlo', 'Monaco', monospace;
+            color: var(--text);
+        }
+
+        /* ── Comparison table ───────────────────────── */
+
+        .table-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .table-note {
+            font-size: 0.74rem;
+            color: var(--text-muted);
+        }
+
+        .sort-hint {
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .table-wrap {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead th {
+            padding: 11px 16px;
+            text-align: left;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.09em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            background: var(--surface-2);
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+            cursor: pointer;
+            user-select: none;
+            transition: color .15s;
+        }
+
+        thead th:hover { color: var(--text); }
+        thead th.sorted { color: #fff; }
+
+        thead th .sort-arrow {
+            display: inline-block;
+            margin-left: 4px;
+            opacity: 0.4;
+            font-size: 0.6rem;
+        }
+
+        thead th.sorted .sort-arrow { opacity: 1; }
+
+        tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background .1s;
+        }
+
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: var(--surface-2); }
+
+        tbody td {
+            padding: 11px 16px;
+            font-size: 0.82rem;
+            vertical-align: middle;
+        }
+
+        .ind-cell {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+
+        .ind-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .ind-link {
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color .15s;
+        }
+        .ind-link:hover { color: #fff; }
+
+        .metric-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .metric-val {
+            font-size: 0.88rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            min-width: 44px;
+        }
+
+        .rank-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 28px;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-size: 0.6rem;
+            font-weight: 700;
+            background: var(--surface-2);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        .rank-pill.top { background: rgba(52,211,153,.1); color: #34d399; border-color: rgba(52,211,153,.25); }
+        .rank-pill.mid { background: rgba(251,191,36,.08); color: #fbbf24; border-color: rgba(251,191,36,.2); }
+        .rank-pill.low { background: rgba(113,113,122,.1); color: #71717a; border-color: var(--border); }
+
+        /* ── Fast facts ─────────────────────────────────── */
+
+        .fast-facts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 40px;
+        }
+
+        .fact-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 22px 24px 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .fact-card.jqi { border-top: 3px solid #34d399; }
+        .fact-card.eci { border-top: 3px solid #fb923c; }
+
+        .fact-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            opacity: 0.03;
+            pointer-events: none;
+        }
+
+        .fact-card.jqi::before { background: #34d399; }
+        .fact-card.eci::before { background: #fb923c; }
+
+        .fact-label {
+            font-size: 0.6rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .fact-card.jqi .fact-label { color: #34d399; }
+        .fact-card.eci .fact-label { color: #fb923c; }
+
+        .fact-score {
+            font-size: 2.4rem;
+            font-weight: 700;
+            letter-spacing: -0.04em;
+            line-height: 1;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .fact-industry {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 14px;
+        }
+
+        .fact-stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .fact-stat { display: flex; flex-direction: column; gap: 2px; }
+
+        .fact-stat-val {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--text);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .fact-stat-key {
+            font-size: 0.62rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        /* ── Charts ─────────────────────────────────────── */
+
+        .chart-wrap {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            position: relative;
+            height: 520px;
+        }
+
+        .chart-wrap.slope { height: 600px; }
+        .chart-wrap.bar   { height: 740px; }
+
+        @media (max-width: 860px) {
+            .report { padding: 0 20px 60px; }
+            .header-inner { padding: 0 20px; }
+            .method-grid { grid-template-columns: 1fr; }
+            .fast-facts { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<header class="main-header">
+    <div class="header-inner">
+        <a href="../index.html" class="site-logo">WORKFORCE <span class="logo-accent">data</span></a>
+        <nav class="main-nav">
+            <a href="../index.html" class="nav-link">Reports</a>
+            <a href="../gallery.html" class="nav-link">Gallery</a>
+            <a href="../builder.html" class="nav-link">Builder</a>
+        </nav>
+    </div>
+</header>
+
+<div class="report">
+
+    <div class="report-cover">
+        <a href="../index.html" class="back-link">← All Reports</a>
+        <div style="margin-top:20px;">
+            <div class="cover-label">Custom Report · Macon-Bibb County</div>
+            <h1>Economic Impact Analysis</h1>
+            <p class="subtitle">Two frameworks for measuring how industries contribute to Macon's economy — and why they sometimes tell very different stories about the same sector.</p>
+        </div>
+    </div>
+
+    <!-- ── Fast facts ───────────────────────────────────── -->
+
+    <div class="fast-facts" id="fastFacts">
+        <div class="fact-card jqi">
+            <div class="fact-label">Highest Job Quality · JQI</div>
+            <div class="fact-score" id="ff-jqi-score">—</div>
+            <div class="fact-industry" id="ff-jqi-name">Loading…</div>
+            <div class="fact-stats">
+                <div class="fact-stat">
+                    <span class="fact-stat-val" id="ff-jqi-wage">—</span>
+                    <span class="fact-stat-key">Avg Annual Wage</span>
+                </div>
+                <div class="fact-stat">
+                    <span class="fact-stat-val" id="ff-jqi-vs">—</span>
+                    <span class="fact-stat-key">vs. Regional Avg</span>
+                </div>
+                <div class="fact-stat">
+                    <span class="fact-stat-val" id="ff-jqi-growth">—</span>
+                    <span class="fact-stat-key">Annual Growth</span>
+                </div>
+            </div>
+        </div>
+        <div class="fact-card eci">
+            <div class="fact-label">Highest Economic Contribution · ECI</div>
+            <div class="fact-score" id="ff-eci-score">—</div>
+            <div class="fact-industry" id="ff-eci-name">Loading…</div>
+            <div class="fact-stats">
+                <div class="fact-stat">
+                    <span class="fact-stat-val" id="ff-eci-empl">—</span>
+                    <span class="fact-stat-key">Total Employment</span>
+                </div>
+                <div class="fact-stat">
+                    <span class="fact-stat-val" id="ff-eci-share">—</span>
+                    <span class="fact-stat-key">Share of Wage Bill</span>
+                </div>
+                <div class="fact-stat">
+                    <span class="fact-stat-val" id="ff-eci-growth">—</span>
+                    <span class="fact-stat-key">Annual Growth</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Methodology cards ─────────────────────────── -->
+
+    <div class="section-wrap">
+        <div class="section-title">The Two Measures</div>
+        <div class="method-grid">
+
+            <div class="method-card jqi">
+                <div class="method-header">
+                    <div class="method-badge">JQI</div>
+                    <h3>Job Quality Index</h3>
+                </div>
+                <p>Measures the quality of individual jobs in this sector. Compares average wages to the regional baseline and adjusts for growth — a high JQI means this sector offers above-average jobs that are getting better, not just that the sector is large.</p>
+                <div class="method-formula">(avg sector wage ÷ regional avg wage) × (1 + growth rate)</div>
+            </div>
+
+            <div class="method-card eci">
+                <div class="method-header">
+                    <div class="method-badge">ECI</div>
+                    <h3>Economic Contribution Index</h3>
+                </div>
+                <p>Measures how much the sector contributes to the local economy as a whole — not the quality of individual jobs. A sector with many workers or a large total wage bill scores high even if individual wages are modest. Adjusted for growth.</p>
+                <div class="method-formula">(sector wage bill ÷ total local wage bill) × (1 + growth rate)</div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ── Scatter chart ─────────────────────────────────── -->
+
+    <div class="section-wrap">
+        <div class="section-title">JQI vs. ECI — All Industries</div>
+        <p style="font-size:0.72rem;color:var(--text-muted);margin-bottom:12px;">Health Care &amp; Social Assistance excluded — its ECI of <span id="hc-eci-val">—</span> dominates Macon's wage bill and would compress all other industries into an unreadable band. It appears in the fast facts above.</p>
+        <div class="chart-wrap">
+            <canvas id="scatterChart"></canvas>
+        </div>
+    </div>
+
+    <!-- ── Slope chart ───────────────────────────────────── -->
+
+    <div class="section-wrap">
+        <div class="section-title">Rank Divergence — JQI vs. ECI</div>
+        <p style="font-size:0.72rem;color:var(--text-muted);margin-bottom:12px;">Steep or crossing lines show where the two metrics most disagree. Includes all 20 industries.</p>
+        <div class="chart-wrap slope">
+            <canvas id="slopeChart"></canvas>
+        </div>
+    </div>
+
+    <!-- ── Diverging bar ──────────────────────────────────── -->
+
+    <div class="section-wrap">
+        <div class="section-title">JQI &amp; ECI Side by Side — Sorted by Job Quality</div>
+        <p style="font-size:0.72rem;color:var(--text-muted);margin-bottom:12px;">Industries ranked top to bottom by JQI. A wide gap between bars signals a sector where job quality and economic contribution tell different stories.</p>
+        <div class="chart-wrap bar">
+            <canvas id="barChart"></canvas>
+        </div>
+    </div>
+
+    <!-- ── Comparison table ───────────────────────────── -->
+
+    <div class="section-wrap">
+        <div class="section-title">All Industries Compared</div>
+        <div class="table-controls">
+            <p class="table-note">Values above 1.0× are above their respective baselines. Click any column header to sort.</p>
+            <span class="sort-hint">↕ click to sort</span>
+        </div>
+        <div class="table-wrap">
+            <table id="compTable">
+                <thead>
+                    <tr>
+                        <th data-col="name">Industry <span class="sort-arrow">↕</span></th>
+                        <th data-col="eii" class="sorted">JQI — Job Quality <span class="sort-arrow">↓</span></th>
+                        <th data-col="eiiOld">ECI — Economic Contribution <span class="sort-arrow">↕</span></th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:24px;">Loading…</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function toNum(v) {
+    const n = parseFloat(String(v).replace(/,/g, '').trim());
+    return isNaN(n) ? 0 : n;
+}
+
+function parseCSV(text) {
+    const lines = text.trim().split('\n');
+    const headers = lines[0].split(',').map(h => h.trim());
+    return lines.slice(1).map(line => {
+        const vals = [];
+        let cur = '', inQ = false;
+        for (const ch of line) {
+            if (ch === '"') { inQ = !inQ; }
+            else if (ch === ',' && !inQ) { vals.push(cur.trim()); cur = ''; }
+            else { cur += ch; }
+        }
+        vals.push(cur.trim());
+        const obj = {};
+        headers.forEach((h, i) => obj[h] = vals[i] ?? '');
+        return obj;
+    });
+}
+
+const INDUSTRIES = {
+    '11': { name: 'Agriculture, Forestry, Fishing & Hunting',     prefixes: ['11'],           color: '#86efac' },
+    '21': { name: 'Mining, Quarrying & Oil and Gas Extraction',    prefixes: ['21'],           color: '#fcd34d' },
+    '22': { name: 'Utilities',                                     prefixes: ['22'],           color: '#67e8f9' },
+    '23': { name: 'Construction',                                  prefixes: ['23'],           color: '#fdba74' },
+    '31': { name: 'Manufacturing',                                 prefixes: ['31','32','33'], color: '#93c5fd' },
+    '42': { name: 'Wholesale Trade',                               prefixes: ['42'],           color: '#5eead4' },
+    '44': { name: 'Retail Trade',                                  prefixes: ['44','45'],      color: '#f9a8d4' },
+    '48': { name: 'Transportation & Warehousing',                  prefixes: ['48','49'],      color: '#fca5a5' },
+    '51': { name: 'Information',                                   prefixes: ['51'],           color: '#c4b5fd' },
+    '52': { name: 'Finance & Insurance',                           prefixes: ['52'],           color: '#7dd3fc' },
+    '53': { name: 'Real Estate & Rental and Leasing',              prefixes: ['53'],           color: '#6ee7b7' },
+    '54': { name: 'Professional, Scientific & Technical Services', prefixes: ['54'],           color: '#a5b4fc' },
+    '55': { name: 'Management of Companies & Enterprises',         prefixes: ['55'],           color: '#94a3b8' },
+    '56': { name: 'Administrative & Support Services',             prefixes: ['56'],           color: '#fde68a' },
+    '61': { name: 'Educational Services',                          prefixes: ['61'],           color: '#bef264' },
+    '62': { name: 'Health Care & Social Assistance',               prefixes: ['62'],           color: '#34d399' },
+    '71': { name: 'Arts, Entertainment & Recreation',              prefixes: ['71'],           color: '#f9a8d4' },
+    '72': { name: 'Accommodation & Food Services',                 prefixes: ['72'],           color: '#fb923c' },
+    '81': { name: 'Other Services',                                prefixes: ['81'],           color: '#a1a1aa' },
+    '92': { name: 'Public Administration',                         prefixes: ['92'],           color: '#818cf8' },
+};
+
+let tableData   = [];
+let sortCol     = 'eii';
+let sortDir     = -1; // -1 = descending
+
+function rankPill(rank, n) {
+    const cls = rank <= Math.ceil(n / 3) ? 'top' : rank <= Math.ceil(2 * n / 3) ? 'mid' : 'low';
+    return `<span class="rank-pill ${cls}">#${rank}</span>`;
+}
+
+function valColor(val, baseline) {
+    if (val >= baseline * 1.1) return '#34d399';
+    if (val >= baseline * 0.9) return '#d4d4d8';
+    return '#71717a';
+}
+
+function renderTable() {
+    const n    = tableData.length;
+    const rows = [...tableData].sort((a, b) => sortDir * (a[sortCol] < b[sortCol] ? -1 : a[sortCol] > b[sortCol] ? 1 : 0));
+
+    // Compute ranks for each metric
+    const eiiRanked    = [...tableData].sort((a, b) => b.eii    - a.eii);
+    const eiiOldRanked = [...tableData].sort((a, b) => b.eiiOld - a.eiiOld);
+    const rankOf = (arr, id) => arr.findIndex(d => d.id === id) + 1;
+
+    document.getElementById('tableBody').innerHTML = rows.map(d => {
+        const rEii = rankOf(eiiRanked, d.id);
+        const rOld = rankOf(eiiOldRanked, d.id);
+
+        return `<tr>
+            <td>
+                <div class="ind-cell">
+                    <div class="ind-dot" style="background:${d.color}"></div>
+                    <a class="ind-link" href="industry.html?id=${d.id}">${d.name}</a>
+                </div>
+            </td>
+            <td>
+                <div class="metric-cell">
+                    <span class="metric-val" style="color:${valColor(d.eii, 1)}">${d.eii.toFixed(2)}×</span>
+                    ${rankPill(rEii, n)}
+                </div>
+            </td>
+            <td>
+                <div class="metric-cell">
+                    <span class="metric-val" style="color:${valColor(d.eiiOld, 1)}">${d.eiiOld.toFixed(2)}×</span>
+                    ${rankPill(rOld, n)}
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+
+    // Update sort arrows
+    document.querySelectorAll('thead th').forEach(th => {
+        th.classList.toggle('sorted', th.dataset.col === sortCol);
+        const arrow = th.querySelector('.sort-arrow');
+        if (th.dataset.col === sortCol) {
+            arrow.textContent = sortDir === -1 ? '↓' : '↑';
+        } else {
+            arrow.textContent = '↕';
+        }
+    });
+}
+
+async function init() {
+    let rows;
+    try {
+        const resp = await fetch('../Data/processed/Industry_Snapshot.csv');
+        if (!resp.ok) throw new Error();
+        rows = parseCSV(await resp.text());
+    } catch {
+        document.getElementById('tableBody').innerHTML =
+            '<tr><td colspan="4" style="color:#f87171;padding:20px;">Could not load data — serve via: python3 -m http.server 8080</td></tr>';
+        return;
+    }
+
+    const allInd = rows.filter(r => (r['NAICS'] || '').trim() !== '');
+    const regWN  = allInd.reduce((s, r) => s + toNum(r['Avg Ann Wages']) * toNum(r['Empl']), 0);
+    const regWD  = allInd.reduce((s, r) => s + toNum(r['Empl']), 0);
+    const regionalAvgWage = regWD > 0 ? regWN / regWD : 1;
+
+    let totalWageBill = 0;
+    for (const [id, cfg] of Object.entries(INDUSTRIES)) {
+        const ir = rows.filter(r => {
+            const c = (r['NAICS'] || '').trim();
+            return c && cfg.prefixes.some(p => c.startsWith(p));
+        });
+        totalWageBill += ir.reduce((s, r) => s + toNum(r['Avg Ann Wages']) * toNum(r['Empl']), 0);
+    }
+
+    for (const [id, cfg] of Object.entries(INDUSTRIES)) {
+        const ir = rows.filter(r => {
+            const c = (r['NAICS'] || '').trim();
+            return c && cfg.prefixes.some(p => c.startsWith(p));
+        });
+        if (!ir.length) continue;
+
+        const empl    = ir.reduce((s, r) => s + toNum(r['Empl']), 0);
+        const wageN   = ir.reduce((s, r) => s + toNum(r['Avg Ann Wages']) * toNum(r['Empl']), 0);
+        const avgWage = empl > 0 ? wageN / empl : 0;
+
+        const growth    = ir.length ? ir.reduce((s, r) => s + toNum(r['Ann % Growth']), 0) / ir.length : 0;
+        const eii       = (avgWage / regionalAvgWage) * (1 + Math.max(growth, -0.5));
+        const eiiOldRaw = totalWageBill > 0 ? (wageN / totalWageBill) * (1 + Math.max(growth, -0.5)) : 0;
+
+        tableData.push({ id, name: cfg.name, color: cfg.color, eii, eiiOldRaw });
+    }
+
+    // Normalize ECI so mean = 1.0
+    const meanOld = tableData.reduce((s, d) => s + d.eiiOldRaw, 0) / tableData.length;
+    tableData.forEach(d => d.eiiOld = meanOld > 0 ? d.eiiOldRaw / meanOld : 0);
+
+    // Fast facts — augment tableData with supporting stats for the cards
+    for (const d of tableData) {
+        const cfg = INDUSTRIES[d.id];
+        const ir  = rows.filter(r => {
+            const c = (r['NAICS'] || '').trim();
+            return c && cfg.prefixes.some(p => c.startsWith(p));
+        });
+        d.empl    = ir.reduce((s, r) => s + toNum(r['Empl']), 0);
+        d.wageN   = ir.reduce((s, r) => s + toNum(r['Avg Ann Wages']) * toNum(r['Empl']), 0);
+        d.avgWage = d.empl > 0 ? d.wageN / d.empl : 0;
+        d.growth  = ir.length ? ir.reduce((s, r) => s + toNum(r['Ann % Growth']), 0) / ir.length : 0;
+        d.wageBillShare = totalWageBill > 0 ? d.wageN / totalWageBill * 100 : 0;
+    }
+
+    const topJqi = [...tableData].sort((a, b) => b.eii    - a.eii)[0];
+    const topEci = [...tableData].sort((a, b) => b.eiiOld - a.eiiOld)[0];
+
+    const fmt$ = v => '$' + Math.round(v).toLocaleString();
+    const fmtG = v => (v >= 0 ? '+' : '') + (v * 100).toFixed(1) + '%';
+
+    document.getElementById('ff-jqi-score').textContent   = topJqi.eii.toFixed(2) + '×';
+    document.getElementById('ff-jqi-name').textContent    = topJqi.name;
+    document.getElementById('ff-jqi-wage').textContent    = fmt$(topJqi.avgWage);
+    document.getElementById('ff-jqi-vs').textContent      = (topJqi.avgWage / regionalAvgWage).toFixed(2) + '× regional avg';
+    document.getElementById('ff-jqi-growth').textContent  = fmtG(topJqi.growth);
+
+    document.getElementById('ff-eci-score').textContent   = topEci.eiiOld.toFixed(2) + '×';
+    document.getElementById('ff-eci-name').textContent    = topEci.name;
+    document.getElementById('ff-eci-empl').textContent    = topEci.empl.toLocaleString() + ' jobs';
+    document.getElementById('ff-eci-share').textContent   = topEci.wageBillShare.toFixed(1) + '% of local wages';
+    document.getElementById('ff-eci-growth').textContent  = fmtG(topEci.growth);
+
+    const hc = tableData.find(d => d.id === '62');
+    if (hc) document.getElementById('hc-eci-val').textContent = hc.eiiOld.toFixed(2) + '×';
+
+    renderTable();
+    buildScatter();
+    buildSlopeChart();
+    buildDivergingBar();
+}
+
+const SHORT = {
+    '11': 'Agriculture',   '21': 'Mining',         '22': 'Utilities',
+    '23': 'Construction',  '31': 'Manufacturing',   '42': 'Wholesale',
+    '44': 'Retail',        '48': 'Transport.',      '51': 'Information',
+    '52': 'Finance',       '53': 'Real Estate',     '54': 'Prof. Services',
+    '55': 'Management',    '56': 'Admin. Services', '61': 'Education',
+    '62': 'Health Care',   '71': 'Arts & Ent.',     '72': 'Food & Hotel',
+    '81': 'Other Services','92': 'Public Admin.',
+};
+
+function buildScatter() {
+    const quadrantPlugin = {
+        id: 'quadrant',
+        afterDraw(chart) {
+            const { ctx, chartArea, scales } = chart;
+            const x1 = scales.x.getPixelForValue(1);
+            const y1 = scales.y.getPixelForValue(1);
+
+            ctx.save();
+            ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 5]);
+
+            ctx.beginPath(); ctx.moveTo(x1, chartArea.top);    ctx.lineTo(x1, chartArea.bottom); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(chartArea.left, y1);   ctx.lineTo(chartArea.right, y1);  ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.restore();
+
+            // Quadrant labels
+            const pad = 10;
+            ctx.save();
+            ctx.font = '600 9.5px Inter, system-ui, sans-serif';
+            ctx.fillStyle = 'rgba(255,255,255,0.13)';
+
+            ctx.textAlign = 'right';
+            ctx.fillText('HIGH QUALITY · HIGH CONTRIBUTION', chartArea.right - pad, chartArea.top + 14);
+            ctx.textAlign = 'left';
+            ctx.fillText('LOW QUALITY · HIGH CONTRIBUTION',  chartArea.left + pad,  chartArea.top + 14);
+            ctx.fillText('LOW QUALITY · LOW CONTRIBUTION',   chartArea.left + pad,  chartArea.bottom - pad);
+            ctx.textAlign = 'right';
+            ctx.fillText('HIGH QUALITY · LOW CONTRIBUTION',  chartArea.right - pad, chartArea.bottom - pad);
+            ctx.restore();
+        }
+    };
+
+    // Healthcare excluded — its ECI dominates the local economy at ~5× the next sector,
+    // compressing all other industries into an unreadable band at the bottom of the chart.
+    // It appears in the fast facts and comparison table above.
+    const points = tableData.filter(d => d.id !== '62').map(d => ({
+        x:        d.eii,
+        y:        d.eiiOld,
+        label:    SHORT[d.id] || d.name,
+        fullName: d.name,
+        color:    d.color,
+    }));
+
+    new Chart(document.getElementById('scatterChart'), {
+        type: 'scatter',
+        plugins: [ChartDataLabels, quadrantPlugin],
+        data: {
+            datasets: [{
+                data:                 points,
+                pointBackgroundColor: points.map(p => p.color),
+                pointBorderColor:     'transparent',
+                pointRadius:          7,
+                pointHoverRadius:     10,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#1c1c1f',
+                    borderColor:     '#3f3f46',
+                    borderWidth:     1,
+                    titleColor:      '#fff',
+                    bodyColor:       '#a1a1aa',
+                    padding:         10,
+                    callbacks: {
+                        title: ctx => ctx[0].raw.fullName,
+                        label: ctx => [`JQI: ${ctx.raw.x.toFixed(2)}×`, `ECI: ${ctx.raw.y.toFixed(2)}×`],
+                    }
+                },
+                datalabels: {
+                    formatter: v => v.label,
+                    color:     'rgba(212,212,216,0.8)',
+                    font:      { size: 10, weight: '500', family: 'Inter, system-ui, sans-serif' },
+                    anchor:    'end',
+                    align:     'top',
+                    offset:    3,
+                    clamp:     true,
+                },
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text:    'JQI — Job Quality Index',
+                        color:   '#52525b',
+                        font:    { size: 11, weight: '500' },
+                        padding: { top: 8 },
+                    },
+                    grid:  { color: 'rgba(255,255,255,0.04)' },
+                    ticks: { color: '#52525b', font: { size: 11 } },
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text:    'ECI — Economic Contribution Index',
+                        color:   '#52525b',
+                        font:    { size: 11, weight: '500' },
+                        padding: { bottom: 8 },
+                    },
+                    grid:  { color: 'rgba(255,255,255,0.04)' },
+                    ticks: { color: '#52525b', font: { size: 11 } },
+                },
+            },
+        }
+    });
+}
+
+function buildSlopeChart() {
+    const canvas = document.getElementById('slopeChart');
+    if (!canvas) return;
+    const dpr  = window.devicePixelRatio || 1;
+    // Read width from parent (chart-wrap) minus its padding, not from canvas itself
+    // which may not yet have a layout width at call time.
+    const W    = (canvas.parentElement.clientWidth || 900) - 48;
+    const H    = 600;
+    canvas.style.width  = W + 'px';
+    canvas.style.height = H + 'px';
+    canvas.width  = W * dpr;
+    canvas.height = H * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    const padTop = 34, padBot = 12;
+    const n      = tableData.length;
+    const rowH   = (H - padTop - padBot) / n;
+
+    // Dots sit at 30% and 70% of the canvas width — labels live in the outer 30% on each side
+    const dotL = Math.round(W * 0.30);
+    const dotR = Math.round(W * 0.70);
+    const yAt  = i => padTop + i * rowH + rowH / 2;
+
+    const byJqi = [...tableData].sort((a, b) => b.eii    - a.eii);
+    const byEci = [...tableData].sort((a, b) => b.eiiOld - a.eiiOld);
+    const jRank = {}, eRank = {};
+    byJqi.forEach((d, i) => jRank[d.id] = i);
+    byEci.forEach((d, i) => eRank[d.id] = i);
+
+    // Lines first (drawn behind dots)
+    tableData.forEach(d => {
+        ctx.save();
+        ctx.strokeStyle = d.color + 'aa';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(dotL, yAt(jRank[d.id]));
+        ctx.lineTo(dotR, yAt(eRank[d.id]));
+        ctx.stroke();
+        ctx.restore();
+    });
+
+    // Left column — sorted by JQI rank
+    byJqi.forEach((d, i) => {
+        const y = yAt(i);
+        ctx.save();
+        ctx.fillStyle = d.color;
+        ctx.beginPath(); ctx.arc(dotL, y, 8, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#0d0d0f'; ctx.font = 'bold 9px Inter,sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(i + 1, dotL, y);
+        ctx.fillStyle = '#a1a1aa'; ctx.font = '500 11px Inter,sans-serif';
+        ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+        ctx.fillText(SHORT[d.id] || d.name, dotL - 14, y);
+        ctx.restore();
+    });
+
+    // Right column — sorted by ECI rank
+    byEci.forEach((d, i) => {
+        const y = yAt(i);
+        ctx.save();
+        ctx.fillStyle = d.color;
+        ctx.beginPath(); ctx.arc(dotR, y, 8, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#0d0d0f'; ctx.font = 'bold 9px Inter,sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(i + 1, dotR, y);
+        ctx.fillStyle = '#a1a1aa'; ctx.font = '500 11px Inter,sans-serif';
+        ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        ctx.fillText(SHORT[d.id] || d.name, dotR + 14, y);
+        ctx.restore();
+    });
+
+    // Column headers
+    ctx.save();
+    ctx.font = 'bold 11px Inter,sans-serif';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#34d399'; ctx.textAlign = 'right';
+    ctx.fillText('JQI RANK', dotL - 14, 17);
+    ctx.fillStyle = '#fb923c'; ctx.textAlign = 'left';
+    ctx.fillText('ECI RANK', dotR + 14, 17);
+    ctx.restore();
+}
+
+function buildDivergingBar() {
+    const sorted  = [...tableData].sort((a, b) => b.eii - a.eii);
+    const labels  = sorted.map(d => SHORT[d.id] || d.name);
+    const jqiVals = sorted.map(d => +d.eii.toFixed(3));
+    const eciVals = sorted.map(d => +d.eiiOld.toFixed(3));
+
+    new Chart(document.getElementById('barChart'), {
+        type: 'bar',
+        plugins: [ChartDataLabels],
+        data: {
+            labels,
+            datasets: [
+                {
+                    label:           'JQI — Job Quality',
+                    data:            jqiVals,
+                    backgroundColor: 'rgba(52,211,153,0.7)',
+                    borderRadius:    3,
+                    borderSkipped:   false,
+                },
+                {
+                    label:           'ECI — Economic Contribution',
+                    data:            eciVals,
+                    backgroundColor: 'rgba(251,146,60,0.7)',
+                    borderRadius:    3,
+                    borderSkipped:   false,
+                },
+            ]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: { color: '#a1a1aa', font: { size: 11 }, boxWidth: 12, padding: 16 },
+                },
+                tooltip: {
+                    backgroundColor: '#1c1c1f',
+                    borderColor:     '#3f3f46',
+                    borderWidth:     1,
+                    titleColor:      '#fff',
+                    bodyColor:       '#a1a1aa',
+                    padding:         10,
+                    callbacks: {
+                        title: ctx => sorted[ctx[0].dataIndex].name,
+                    },
+                },
+                datalabels: { display: false },
+            },
+            scales: {
+                x: {
+                    grid:  { color: 'rgba(255,255,255,0.04)' },
+                    ticks: { color: '#52525b', font: { size: 10 } },
+                },
+                y: {
+                    grid:  { display: false },
+                    ticks: { color: '#a1a1aa', font: { size: 10.5 }, mirror: false },
+                },
+            },
+        }
+    });
+}
+
+// Sort on header click
+document.querySelectorAll('thead th[data-col]').forEach(th => {
+    th.addEventListener('click', () => {
+        const col = th.dataset.col;
+        sortDir = col === sortCol ? -sortDir : -1;
+        sortCol = col;
+        renderTable();
+    });
+});
+
+init();
+</script>
+</body>
+</html>

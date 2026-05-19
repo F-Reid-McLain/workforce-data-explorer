@@ -71,11 +71,16 @@ def image_data_uri(path, mime='image/webp'):
     return f'data:{mime};base64,{data}'
 
 def load_logo_png(path):
-    """Convert any image (including webp) to PNG data URI for reliable PDF rendering."""
+    """Convert webp to PNG, crop transparent padding, return data URI."""
     try:
         from PIL import Image
-        import io
+        import io, numpy as np
         img = Image.open(path).convert('RGBA')
+        arr = np.array(img)
+        alpha = arr[:, :, 3]
+        rows = np.where(alpha.max(axis=1) > 0)[0]
+        cols = np.where(alpha.max(axis=0) > 0)[0]
+        img = img.crop((cols[0], rows[0], cols[-1] + 1, rows[-1] + 1))
         buf = io.BytesIO()
         img.save(buf, format='PNG')
         data = base64.b64encode(buf.getvalue()).decode('ascii')
@@ -226,9 +231,15 @@ def build_html(d, geo_json_str, logo_uri=None):
   /* Page 1 header */
   .pg1-header {{
     border-bottom: 1.5pt solid #e5e7eb; padding-bottom: 14pt; margin-bottom: 16pt;
+    font-size: 0;
   }}
-  .pg1-eyebrow-row {{
-    display: flex; align-items: center; justify-content: space-between; margin-bottom: 4pt;
+  .pg1-header-text {{
+    display: inline-block; vertical-align: top;
+    width: calc(100% - 160pt); font-size: initial;
+  }}
+  .pg1-header-logo {{
+    display: inline-block; vertical-align: top;
+    width: 150pt; text-align: right; font-size: initial;
   }}
   .pg1-eyebrow {{
     font-size: 6.5pt; font-weight: 600; letter-spacing: 0.14em;
@@ -307,12 +318,11 @@ def build_html(d, geo_json_str, logo_uri=None):
 
   <!-- Header -->
   <div class="pg1-header">
-    <div class="pg1-eyebrow-row">
+    <div class="pg1-header-text">
       <div class="pg1-eyebrow">Economic Overview · Macon-Bibb County, Georgia</div>
-      {'<img src="' + logo_uri + '" style="height:52pt;width:auto;" />' if logo_uri else ''}
-    </div>
-    <div class="pg1-title">Macon-Bibb County</div>
-    <p class="pg1-sub">Central Georgia's regional economic hub — a diverse workforce at the intersection of major transportation corridors, anchored by healthcare, public services, and growing industry.</p>
+      <div class="pg1-title">Macon-Bibb County</div>
+      <p class="pg1-sub" style="margin:0;">Central Georgia's regional economic hub — a diverse workforce at the intersection of major transportation corridors, anchored by healthcare, public services, and growing industry.</p>
+    </div><div class="pg1-header-logo">{'<img src="' + logo_uri + '" style="height:34pt;width:auto;" />' if logo_uri else ''}</div>
   </div>
 
   <!-- Fast facts -->

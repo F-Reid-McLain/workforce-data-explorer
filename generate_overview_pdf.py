@@ -70,6 +70,19 @@ def image_data_uri(path, mime='image/webp'):
     data = base64.b64encode(Path(path).read_bytes()).decode('ascii')
     return f'data:{mime};base64,{data}'
 
+def load_logo_png(path):
+    """Convert any image (including webp) to PNG data URI for reliable PDF rendering."""
+    try:
+        from PIL import Image
+        import io
+        img = Image.open(path).convert('RGBA')
+        buf = io.BytesIO()
+        img.save(buf, format='PNG')
+        data = base64.b64encode(buf.getvalue()).decode('ascii')
+        return f'data:image/png;base64,{data}'
+    except Exception:
+        return None
+
 # ── Data processing ────────────────────────────────────────────────────────
 
 def process(ind_rows, occ_rows, pop_rows, comm_rows):
@@ -156,32 +169,27 @@ def build_occ_table(occ_rows):
               f'<th style="{th}">Occupation</th>'
               f'<th style="{th};text-align:right">Employment</th>'
               f'<th style="{th};text-align:right">Avg Annual Wage</th>'
-              f'<th style="{th};text-align:right">LQ</th>'
               f'</tr>')
     rows_html = ''
     for i, r in enumerate(occ_rows):
-        lq  = to_num(r.get('LQ', 0))
-        lq_color = '#059669' if lq >= 1.2 else '#d97706' if lq >= 0.8 else '#9ca3af'
         wage = to_num(r.get('Mean Ann Wages2', 0))
         rows_html += (f'<tr>'
                       f'<td style="{td}color:#9ca3af">{i+1}</td>'
                       f'<td style="{td}font-weight:500">{r.get("Occupation","")}</td>'
                       f'<td style="{td}text-align:right">{fmt_num(to_num(r.get("Empl",0)))}</td>'
                       f'<td style="{td}text-align:right">{fmt_dollar(wage) if wage > 0 else "—"}</td>'
-                      f'<td style="{td}text-align:right;color:{lq_color};font-weight:600">'
-                      f'{"—" if lq <= 0 else f"{lq:.2f}×"}</td>'
                       f'</tr>')
     return f'<table style="width:100%;border-collapse:collapse;"><thead>{header}</thead><tbody>{rows_html}</tbody></table>'
 
 # ── HTML template ──────────────────────────────────────────────────────────
 
-def build_html(d, geo_json_str):
+def build_html(d, geo_json_str, logo_uri=None):
     ind_labels  = json.dumps([x['name']  for x in d['industries_sorted']])
     ind_empls   = json.dumps([x['empl']  for x in d['industries_sorted']])
     ind_colors  = json.dumps([x['color'] for x in d['industries_sorted']])
     comm_map_json = json.dumps(d['comm_map_data'])
     pop_map_json  = json.dumps(d['pop_map_data'])
-    occ_table   = build_occ_table(d['top_occ'])
+    occ_table   = build_occ_table(d['top_occ'][:12])
 
     # Demographics hardcoded from 2024 ACS
     age_labels  = json.dumps(['Under 18','18–24','25–34','35–44','45–54','55–64','65–74','75+'])
@@ -191,17 +199,7 @@ def build_html(d, geo_json_str):
     edu_labels  = json.dumps(['Postgraduate',"Bachelor's","Associate's",'Some College','High School','No Diploma'])
     edu_vals    = json.dumps([13.3, 13.9, 9.0, 22.2, 30.4, 11.2])
 
-    comm_rows_html = ''.join(
-        f'<tr>'
-        f'<td style="padding:5pt 8pt;font-size:8pt;border-bottom:0.5pt solid #f3f4f6;font-weight:500">{r["name"]}</td>'
-        f'<td style="padding:5pt 8pt;font-size:8pt;border-bottom:0.5pt solid #f3f4f6;text-align:right">{r["pop"]:,}</td>'
-        f'<td style="padding:5pt 8pt;font-size:8pt;border-bottom:0.5pt solid #f3f4f6;text-align:right;color:#4f46e5;font-weight:600">{r["comm"]:,}</td>'
-        f'</tr>'
-        for r in d['surrounding']
-    )
-
-    industry_chart_h = max(200, len(d['industries_sorted']) * 22)
-    demo_h = 180
+    demo_h = 155
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -223,157 +221,195 @@ def build_html(d, geo_json_str):
   }}
   .page {{ page-break-after: always; }}
   .page:last-child {{ page-break-after: auto; }}
+  .content {{ padding: 0.42in 0.32in; }}
 
-  /* Cover */
-  .cover {{
-    min-height: 9in;
-    display: flex; flex-direction: column; justify-content: center;
-    background: #0f172a;
-    padding: 1in 0.7in;
-    position: relative;
+  /* Page 1 header */
+  .pg1-header {{
+    border-bottom: 1.5pt solid #e5e7eb; padding-bottom: 14pt; margin-bottom: 16pt;
   }}
-  .cover::before {{
-    content: '';
-    position: absolute; left: 0; top: 0; bottom: 0; width: 5pt;
-    background: #059669;
+  .pg1-eyebrow-row {{
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 4pt;
   }}
-  .cover-label {{
-    font-size: 7pt; font-weight: 600;
-    letter-spacing: 0.14em; text-transform: uppercase;
-    color: #34d399; margin-bottom: 12pt;
+  .pg1-eyebrow {{
+    font-size: 6.5pt; font-weight: 600; letter-spacing: 0.14em;
+    text-transform: uppercase; color: #059669; margin-bottom: 4pt;
   }}
-  .cover h1 {{
-    font-size: 40pt; font-weight: 700;
-    letter-spacing: -0.03em; color: #fff;
-    line-height: 1.0; margin-bottom: 10pt;
+  .pg1-title {{
+    font-size: 26pt; font-weight: 700; letter-spacing: -0.03em;
+    color: #111827; line-height: 1.0; margin-bottom: 5pt;
   }}
-  .cover-sub {{
-    font-size: 10pt; color: #94a3b8;
-    max-width: 5in; line-height: 1.7; margin-bottom: 36pt;
+  .pg1-sub {{
+    font-size: 8.5pt; color: #6b7280; max-width: 4.2in; line-height: 1.6;
   }}
-  .kpi-row {{
+  .pg1-date {{
+    font-size: 7.5pt; color: #9ca3af; text-align: right; white-space: nowrap;
+    padding-top: 4pt;
+  }}
+
+  /* Fast facts */
+  .ff-grid {{
     display: grid; grid-template-columns: repeat(5, 1fr);
-    gap: 10pt; margin-top: 0;
+    gap: 9pt; margin-bottom: 16pt;
   }}
-  .kpi-block {{
-    background: rgba(255,255,255,0.05);
-    border: 1pt solid rgba(255,255,255,0.1);
-    border-radius: 6pt;
-    padding: 14pt 14pt;
+  .ff-card {{
+    background: #f9fafb; border: 1pt solid #e5e7eb;
+    border-radius: 6pt; padding: 11pt 12pt;
   }}
-  .kpi-val {{ font-size: 18pt; font-weight: 700; color: #fff; letter-spacing: -0.03em; line-height: 1; }}
-  .kpi-lbl {{ font-size: 6pt; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #64748b; margin-top: 5pt; }}
+  .ff-val {{
+    font-size: 16pt; font-weight: 700; letter-spacing: -0.03em;
+    color: #111827; line-height: 1; margin-bottom: 4pt;
+  }}
+  .ff-label {{
+    font-size: 5.5pt; font-weight: 600; letter-spacing: 0.09em;
+    text-transform: uppercase; color: #9ca3af;
+  }}
 
-  /* Sections */
-  .content {{ padding: 0.55in 0.7in; }}
+  /* Shared section elements */
   .stag {{
     display: inline-block; font-size: 6pt; font-weight: 700;
     letter-spacing: 0.1em; text-transform: uppercase;
     color: #4f46e5; border: 1pt solid #e0e7ff;
     background: #eef2ff; border-radius: 3pt; padding: 1pt 5pt;
-    margin-bottom: 6pt;
+    margin-bottom: 5pt;
   }}
   .stag.teal {{ color: #059669; border-color: #d1fae5; background: #ecfdf5; }}
   .stag.orange {{ color: #d97706; border-color: #fde68a; background: #fffbeb; }}
   .section-title {{
-    font-size: 16pt; font-weight: 700; letter-spacing: -0.02em;
-    color: #111827; margin-bottom: 4pt; line-height: 1.2;
+    font-size: 14pt; font-weight: 700; letter-spacing: -0.02em;
+    color: #111827; margin-bottom: 3pt; line-height: 1.2;
   }}
   .section-sub {{
-    font-size: 8.5pt; color: #6b7280; margin-bottom: 16pt; line-height: 1.6;
+    font-size: 7.5pt; color: #6b7280; margin-bottom: 12pt; line-height: 1.6;
   }}
   .sdiv {{
-    font-size: 7pt; font-weight: 700; letter-spacing: 0.1em;
+    font-size: 6.5pt; font-weight: 700; letter-spacing: 0.1em;
     text-transform: uppercase; color: #9ca3af;
-    border-top: 1pt solid #e5e7eb; padding-top: 8pt; margin: 20pt 0 10pt;
+    border-top: 1pt solid #e5e7eb; padding-top: 7pt; margin: 14pt 0 9pt;
   }}
-  .cbox {{ background: #f9fafb; border: 1pt solid #e5e7eb; border-radius: 6pt; padding: 12pt; }}
+  .cbox {{ background: #f9fafb; border: 1pt solid #e5e7eb; border-radius: 6pt; padding: 10pt; }}
 
-  /* Stat grid */
-  .stat-grid {{
-    display: grid; grid-template-columns: repeat(4, 1fr);
-    gap: 10pt; margin-bottom: 20pt;
-  }}
-  .stat-card {{
-    background: #f9fafb; border: 1pt solid #e5e7eb;
-    border-radius: 6pt; padding: 12pt;
-  }}
-  .stat-val {{ font-size: 16pt; font-weight: 700; color: #111827; letter-spacing: -0.02em; }}
-  .stat-key {{ font-size: 6.5pt; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.07em; margin-top: 3pt; }}
+  /* Page 2 stat cards */
+  .stat-grid {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 9pt; margin-bottom: 14pt; }}
+  .stat-card {{ background: #f9fafb; border: 1pt solid #e5e7eb; border-radius: 6pt; padding: 11pt; }}
+  .stat-val {{ font-size: 15pt; font-weight: 700; color: #111827; letter-spacing: -0.02em; }}
+  .stat-key {{ font-size: 5.5pt; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.07em; margin-top: 3pt; }}
 
-  /* Demo grid */
-  .demo-grid {{ display: grid; grid-template-columns: repeat(3,1fr); gap: 12pt; }}
-  .demo-card {{ background: #f9fafb; border: 1pt solid #e5e7eb; border-radius: 6pt; padding: 12pt; }}
-  .demo-title {{ font-size: 6.5pt; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #9ca3af; margin-bottom: 10pt; border-bottom: 1pt solid #e5e7eb; padding-bottom: 6pt; }}
-
-  /* Commute table */
-  .comm-table {{ width: 100%; border-collapse: collapse; }}
-  .comm-th {{ padding: 5pt 8pt; text-align: left; font-size: 6.5pt; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #6b7280; border-bottom: 1pt solid #e5e7eb; white-space: nowrap; }}
+  /* Demographics */
+  .demo-grid {{ display: grid; grid-template-columns: repeat(3,1fr); gap: 10pt; }}
+  .demo-card {{ background: #f9fafb; border: 1pt solid #e5e7eb; border-radius: 6pt; padding: 10pt; }}
+  .demo-title {{ font-size: 6pt; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #9ca3af; margin-bottom: 8pt; border-bottom: 1pt solid #e5e7eb; padding-bottom: 5pt; }}
 </style>
 </head>
 <body>
 
-<!-- ── Cover ────────────────────────────────────────────── -->
-<div class="page cover">
-  <div class="cover-label">Economic Overview · Macon-Bibb County, Georgia</div>
-  <h1>Macon-Bibb<br>County</h1>
-  <p class="cover-sub">Central Georgia's regional economic hub — a diverse workforce at the intersection of major transportation corridors, anchored by healthcare, public services, and growing industry.</p>
-  <div class="kpi-row">
-    <div class="kpi-block">
-      <div class="kpi-val">{d['total_jobs']:,}</div>
-      <div class="kpi-lbl">Total Jobs</div>
-    </div>
-    <div class="kpi-block">
-      <div class="kpi-val">${d['avg_wage']:,}</div>
-      <div class="kpi-lbl">Avg Annual Wage</div>
-    </div>
-    <div class="kpi-block">
-      <div class="kpi-val">{d['population']:,}</div>
-      <div class="kpi-lbl">Population</div>
-    </div>
-    <div class="kpi-block">
-      <div class="kpi-val">+{d['net_commuters']:,}</div>
-      <div class="kpi-lbl">Net In-Commuters</div>
-    </div>
-    <div class="kpi-block">
-      <div class="kpi-val" style="font-size:11pt;line-height:1.2">{d['top_industry']}</div>
-      <div class="kpi-lbl">Largest Sector</div>
-    </div>
-  </div>
-</div>
-
-<!-- ── Industry Breakdown ─────────────────────────────── -->
+<!-- ══ PAGE 1: Overview + Map ══════════════════════════════ -->
 <div class="page content">
-  <div class="stag">Industry Landscape</div>
-  <div class="section-title">Where Macon Works</div>
-  <p class="section-sub">Total employment by industry sector, sourced from JobsEQ covered employment data for Macon-Bibb County.</p>
-  <div class="cbox">
-    <canvas id="cind" width="640" height="{industry_chart_h}"></canvas>
-  </div>
-</div>
 
-<!-- ── Regional Map ──────────────────────────────────── -->
-<div class="page content" style="page-break-before:always;">
-  <div class="stag">Regional Context</div>
-  <p class="section-sub">All 16 surrounding counties have negative net commuting balances, reflecting a regional workforce that flows toward Macon-Bibb for employment. Net commuting = a county's total in-commuters minus its out-commuters.</p>
-  <div id="map-wrap" style="background:#0d0d0f;border-radius:6pt;overflow:hidden;margin-bottom:18pt;">
+  <!-- Header -->
+  <div class="pg1-header">
+    <div class="pg1-eyebrow-row">
+      <div class="pg1-eyebrow">Economic Overview · Macon-Bibb County, Georgia</div>
+      {'<img src="' + logo_uri + '" style="height:52pt;width:auto;" />' if logo_uri else ''}
+    </div>
+    <div class="pg1-title">Macon-Bibb County</div>
+    <p class="pg1-sub">Central Georgia's regional economic hub — a diverse workforce at the intersection of major transportation corridors, anchored by healthcare, public services, and growing industry.</p>
+  </div>
+
+  <!-- Fast facts -->
+  <div class="ff-grid">
+    <div class="ff-card">
+      <div class="ff-val">{fmt_num(d['total_jobs'])}</div>
+      <div class="ff-label">Total Jobs</div>
+    </div>
+    <div class="ff-card">
+      <div class="ff-val">{fmt_dollar(d['avg_wage'])}</div>
+      <div class="ff-label">Avg Annual Wage</div>
+    </div>
+    <div class="ff-card">
+      <div class="ff-val">{fmt_num(d['population'])}</div>
+      <div class="ff-label">Population</div>
+    </div>
+    <div class="ff-card">
+      <div class="ff-val">+{fmt_num(d['net_commuters'])}</div>
+      <div class="ff-label">Net In-Commuters</div>
+    </div>
+    <div class="ff-card">
+      <div class="ff-val" style="font-size:10pt;line-height:1.3;">{d['top_industry']}</div>
+      <div class="ff-label">Largest Sector</div>
+    </div>
+  </div>
+
+  <!-- Regional map (full width) -->
+  <div id="map-wrap" style="background:#f8fafc;border-radius:6pt;overflow:hidden;border:1pt solid #e5e7eb;">
     <svg id="map-svg" style="display:block;"></svg>
   </div>
-  <div class="cbox" style="padding:0;overflow:hidden;">
-    <table class="comm-table">
-      <thead><tr>
-        <th class="comm-th">County</th>
-        <th class="comm-th" style="text-align:right">Population</th>
-        <th class="comm-th" style="text-align:right">Net Commuting Balance</th>
-      </tr></thead>
-      <tbody>{comm_rows_html}</tbody>
-    </table>
-  </div>
-  <p style="font-size:7pt;color:#9ca3af;margin-top:8pt;">Source: JobsEQ net commuting data · Macon-Bibb County, GA</p>
+  <p style="font-size:6.5pt;color:#9ca3af;margin-top:6pt;">Source: JobsEQ net commuting data · Macon-Bibb County, GA · U.S. Census Bureau Population Estimates</p>
+
 </div>
 
-<!-- ── Demographics ──────────────────────────────────── -->
-<div class="page content" style="page-break-before:always;">
+<!-- ══ PAGE 2: Economic Picture + Who Lives Here ═══════════ -->
+<div class="page content">
+
+  <!-- Adjusted metrics -->
+  <div class="stag teal">The Real Economic Picture</div>
+  <div class="section-title">Workplace-Adjusted Metrics</div>
+  <p class="section-sub">Standard Census figures are residence-based and miss ~24,000 daily net in-commuters. About 40% of workers <em>employed</em> in Bibb County live outside it — understating Macon-Bibb's income and overstating neighbors' prosperity.</p>
+
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9pt;margin-bottom:10pt;">
+    <div class="stat-card">
+      <div style="font-size:5.5pt;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#9ca3af;margin-bottom:7pt;border-bottom:1pt solid #e5e7eb;padding-bottom:4pt;">Median Earnings — Job Site vs. Residence</div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5pt;">
+        <span style="font-size:6.5pt;color:#6b7280;">Adjusted (job-site)</span>
+        <span style="font-size:14pt;font-weight:700;color:#059669;letter-spacing:-.02em;">$68,900</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;">
+        <span style="font-size:6.5pt;color:#6b7280;">Official household median</span>
+        <span style="font-size:10pt;font-weight:600;color:#9ca3af;">$50,747</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div style="font-size:5.5pt;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#9ca3af;margin-bottom:7pt;border-bottom:1pt solid #e5e7eb;padding-bottom:4pt;">Per-Capita GDP — Macon-Bibb vs. Houston Co.</div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5pt;">
+        <span style="font-size:6.5pt;color:#6b7280;">Macon-Bibb (workplace)</span>
+        <span style="font-size:14pt;font-weight:700;color:#059669;letter-spacing:-.02em;">$67,292</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;">
+        <span style="font-size:6.5pt;color:#6b7280;">Houston Co. (adjusted)</span>
+        <span style="font-size:10pt;font-weight:600;color:#9ca3af;">$54,547</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div style="font-size:5.5pt;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#9ca3af;margin-bottom:7pt;border-bottom:1pt solid #e5e7eb;padding-bottom:4pt;">Unemployment — Workplace-Weighted vs. Official</div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5pt;">
+        <span style="font-size:6.5pt;color:#6b7280;">Adjusted WWUR</span>
+        <span style="font-size:14pt;font-weight:700;color:#059669;letter-spacing:-.02em;">3.2%</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;">
+        <span style="font-size:6.5pt;color:#6b7280;">Official residence-based</span>
+        <span style="font-size:10pt;font-weight:600;color:#9ca3af;">4.3%</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9pt;margin-bottom:10pt;">
+    <div class="stat-card" style="border-left:3pt solid #059669;">
+      <div style="font-size:18pt;font-weight:700;color:#059669;letter-spacing:-.03em;line-height:1;margin-bottom:3pt;">60–70%</div>
+      <div style="font-size:7pt;color:#6b7280;line-height:1.5;">of retail spending originates from <strong style="color:#374151;">non-residents</strong> — commuters &amp; regional visitors.</div>
+    </div>
+    <div class="stat-card" style="border-left:3pt solid #059669;">
+      <div style="font-size:18pt;font-weight:700;color:#059669;letter-spacing:-.03em;line-height:1;margin-bottom:3pt;">&lt;$50K</div>
+      <div style="font-size:7pt;color:#6b7280;line-height:1.5;">Houston Co. adjusted income — <strong style="color:#374151;">below $50,000</strong> once commuter wage flows are removed.</div>
+    </div>
+    <div class="stat-card" style="border-left:3pt solid #059669;">
+      <div style="font-size:18pt;font-weight:700;color:#059669;letter-spacing:-.03em;line-height:1;margin-bottom:3pt;">Near Full</div>
+      <div style="font-size:7pt;color:#6b7280;line-height:1.5;">Industrial Authority parcel occupancy (2024) — strong demand despite lagging housing permits.</div>
+    </div>
+  </div>
+  <div style="font-size:6.5pt;color:#9ca3af;border-top:1pt solid #e5e7eb;padding-top:8pt;margin-bottom:16pt;">
+    Source: George, A. (2025). <em>Reclassifying Municipal Realities.</em> U.S. Census, BLS, LEHD/LODES, BEA.
+  </div>
+
+  <!-- Demographics -->
   <div class="stag orange">Workforce Demographics</div>
   <div class="section-title">Who Lives Here</div>
   <p class="section-sub">American Community Survey 2024 estimates for Macon-Bibb County.</p>
@@ -388,8 +424,8 @@ def build_html(d, geo_json_str):
       <div class="stat-key">Labor Force Participation</div>
     </div>
     <div class="stat-card">
-      <div class="stat-val">24.7%</div>
-      <div class="stat-key">Poverty Rate</div>
+      <div class="stat-val">35 yrs</div>
+      <div class="stat-key">Median Age</div>
     </div>
     <div class="stat-card">
       <div class="stat-val">9.5%</div>
@@ -400,27 +436,39 @@ def build_html(d, geo_json_str):
   <div class="demo-grid">
     <div class="demo-card">
       <div class="demo-title">Age Distribution</div>
-      <canvas id="cage" width="200" height="{demo_h}"></canvas>
+      <canvas id="cage" width="185" height="{demo_h}"></canvas>
     </div>
     <div class="demo-card">
       <div class="demo-title">Race &amp; Ethnicity</div>
-      <canvas id="crace" width="200" height="{demo_h}"></canvas>
+      <canvas id="crace" width="185" height="{demo_h}"></canvas>
     </div>
     <div class="demo-card">
-      <div class="demo-title">Educational Attainment (Age 25–64)</div>
-      <canvas id="cedu" width="200" height="{demo_h}"></canvas>
+      <div class="demo-title">Education (Age 25–64)</div>
+      <canvas id="cedu" width="185" height="{demo_h}"></canvas>
     </div>
   </div>
+
 </div>
 
-<!-- ── Occupations ────────────────────────────────────── -->
-<div class="page content" style="page-break-before:always;">
+<!-- ══ PAGE 3: Where Macon Works + In-Demand Roles ═════════ -->
+<div class="page content">
+
+  <!-- Industry chart (top 10) -->
+  <div class="stag">Industry Landscape</div>
+  <div class="section-title">Where Macon Works</div>
+  <p class="section-sub">Top 10 sectors by employment — JobsEQ covered employment data, Macon-Bibb County.</p>
+  <div class="cbox" style="padding:10pt;margin-bottom:14pt;">
+    <canvas id="cind" width="560" height="188"></canvas>
+  </div>
+
+  <!-- Occupations table -->
   <div class="stag teal">Top Occupations</div>
   <div class="section-title">In-Demand Roles</div>
-  <p class="section-sub">Top 15 occupations by employment in Macon-Bibb County. LQ &gt; 1.0 indicates above-average regional concentration vs. the national average.</p>
+  <p class="section-sub">Top 12 occupations by employment in Macon-Bibb County. Growth % is the annual employment change rate.</p>
   <div class="cbox" style="padding:0;overflow:hidden;">
     {occ_table}
   </div>
+
 </div>
 
 
@@ -455,12 +503,12 @@ def build_html(d, geo_json_str):
     }};
   }};
 
-  // Industry chart
+  // Industry chart (top 10 only for compact layout)
   var indEl = document.getElementById('cind');
   if (indEl) {{
-    var indLabels = {ind_labels};
-    var indEmpls  = {ind_empls};
-    var indColors = {ind_colors};
+    var indLabels = {ind_labels}.slice(0,10);
+    var indEmpls  = {ind_empls}.slice(0,10);
+    var indColors = {ind_colors}.slice(0,10);
     new Chart(indEl, {{
       type: 'bar',
       data: {{
@@ -559,12 +607,16 @@ def build_html(d, geo_json_str):
     var COMM = {comm_map_json};
     var POP  = {pop_map_json};
     var BIBB = '13021';
+    var FONT = '-apple-system, Arial, sans-serif';
+    var BG   = '#f8fafc';
 
     var wrap = document.getElementById('map-wrap');
     if (!wrap || typeof d3 === 'undefined') return;
 
-    var W = wrap.getBoundingClientRect().width || 682;
-    var H = 400;
+    // W is the internal drawing canvas; SVG is set to width:100% via viewBox
+    // so it always fills the container regardless of clientWidth measurement
+    var W = 645;
+    var H = 460;
 
     var commLookup = {{}}, popLookup = {{}}, nameLookup = {{}};
     COMM.forEach(function(r) {{
@@ -581,40 +633,55 @@ def build_html(d, geo_json_str):
     var maxNeg  = Math.max.apply(null, [0].concat(nonBibb.filter(function(e){{ return e[1] <= 0; }}).map(function(e){{ return -e[1]; }})));
 
     function countyFill(f) {{
-      if (f === BIBB) return '#166534';
+      if (f === BIBB) return '#2d5a27';
       var comm = commLookup[f]||0;
       if (comm > 0) {{
         var t = comm / (maxPos||1);
-        return d3.interpolateRgb('#dcfce7','#4ade80')(0.15 + t*0.45);
+        return d3.interpolateRgb('#f0fdf4','#bbf7d0')(t);
       }}
       var t = -comm / (maxNeg||1);
       return d3.interpolateRgb('#fff7ed','#c2410c')(0.15 + t*0.75);
     }}
 
-    var proj = d3.geoAlbers().fitExtent([[24,52],[W-24,H-20]], GEO);
+    var proj = d3.geoAlbers().fitExtent([[28,52],[W-28,H-20]], GEO);
     var path = d3.geoPath().projection(proj);
 
-    var svg = d3.select('#map-svg').attr('width', W).attr('height', H);
+    var svg = d3.select('#map-svg')
+      .attr('viewBox', '0 0 ' + W + ' ' + H)
+      .attr('width', '100%')
+      .attr('height', H)
+      .attr('preserveAspectRatio', 'xMidYMid meet');
 
+    // Background
+    svg.append('rect').attr('width',W).attr('height',H).attr('fill',BG);
+
+    // Title bar
+    svg.append('rect').attr('width',W).attr('height',48).attr('fill','#fff');
+    svg.append('line').attr('x1',0).attr('y1',48).attr('x2',W).attr('y2',48)
+      .attr('stroke','#e5e7eb').attr('stroke-width',1);
     svg.append('text').text('Macon and Surrounding Counties')
-      .attr('x',14).attr('y',22)
-      .attr('font-size',13).attr('font-weight',700)
-      .attr('letter-spacing','-0.02em').attr('fill','#f4f4f5');
-    svg.append('text').text('< 1-hour drive radius · net commuting balance by county')
-      .attr('x',14).attr('y',38)
-      .attr('font-size',8).attr('fill','#71717a');
+      .attr('x',14).attr('y',20).attr('font-size',13).attr('font-weight',700)
+      .attr('font-family',FONT).attr('fill','#111827').attr('letter-spacing','-0.02em');
+    svg.append('text').text('< 1-hour drive radius  ·  net commuting balance by county')
+      .attr('x',14).attr('y',37).attr('font-size',9)
+      .attr('font-family',FONT).attr('fill','#9ca3af');
 
+    // County fills — uniform light border so shared edges stay clean
     svg.append('g').selectAll('path')
       .data(GEO.features).join('path')
       .attr('d', path)
       .attr('fill', function(d) {{ return countyFill(String(d.id).padStart(5,'0')); }})
-      .attr('stroke', function(d) {{
-        return String(d.id).padStart(5,'0') === BIBB ? '#34d399' : '#4b5563';
-      }})
-      .attr('stroke-width', function(d) {{
-        return String(d.id).padStart(5,'0') === BIBB ? 2 : 0.6;
-      }});
+      .attr('stroke','#e2e8f0').attr('stroke-width',1);
 
+    // Bibb border on top — no bleed into neighbors
+    var bibbFeat = GEO.features.find(function(d) {{ return String(d.id).padStart(5,'0') === BIBB; }});
+    if (bibbFeat) {{
+      svg.append('path').datum(bibbFeat)
+        .attr('d', path).attr('fill','none')
+        .attr('stroke','#1a3818').attr('stroke-width',2);
+    }}
+
+    // County labels
     GEO.features.forEach(function(d) {{
       var f = String(d.id).padStart(5,'0');
       var isBibb = f === BIBB;
@@ -630,44 +697,69 @@ def build_html(d, geo_json_str):
       var g = svg.append('g').attr('transform','translate('+c[0]+','+c[1]+')');
       if (isBibb) {{
         g.append('text').text('Macon-Bibb').attr('text-anchor','middle').attr('dy','-10')
-          .attr('font-size',12).attr('font-weight',700).attr('fill','#ffffff');
+          .attr('font-size',12).attr('font-weight',700).attr('fill','#ffffff').attr('font-family',FONT);
         g.append('text').text(popStr).attr('text-anchor','middle').attr('dy','4')
-          .attr('font-size',10).attr('fill','#bbf7d0');
+          .attr('font-size',10).attr('fill','#bbf7d0').attr('font-family',FONT);
         g.append('text').text(commStr).attr('text-anchor','middle').attr('dy','18')
-          .attr('font-size',9).attr('fill','#86efac');
+          .attr('font-size',9).attr('fill','#86efac').attr('font-family',FONT);
       }} else if (minDim >= 26) {{
         var fs = Math.max(7, Math.min(9, minDim/6));
         g.append('text').text(name).attr('text-anchor','middle').attr('dy', minDim<40?'-2':'-5')
-          .attr('font-size',fs).attr('font-weight',600).attr('fill','#d1d5db');
+          .attr('font-size',fs).attr('font-weight',600).attr('fill','#1e293b').attr('font-family',FONT);
         g.append('text').text(popStr).attr('text-anchor','middle').attr('dy', minDim<40?'7':'8')
-          .attr('font-size',fs-1).attr('fill','#9ca3af');
+          .attr('font-size',fs-1).attr('fill','#475569').attr('font-family',FONT);
         if (minDim >= 40) {{
-          var commColor = comm > 0 ? '#86efac' : '#fdba74';
+          var commColor = comm > 0 ? '#15803d' : '#7c2d12';
           g.append('text').text(commStr).attr('text-anchor','middle').attr('dy','20')
-            .attr('font-size',fs-1).attr('fill',commColor);
+            .attr('font-size',fs-1).attr('fill',commColor).attr('font-family',FONT);
         }}
       }}
     }});
 
-    // Population stat overlay (bottom-left of map)
+    // SVG stats panel (bottom-left — renders in PDF)
     var totalPop = Object.values(popLookup).reduce(function(s,v){{ return s+v; }}, 0);
     var bibbPop  = popLookup[BIBB] || 0;
-    function fmtPop(n) {{
-      return n >= 1000000 ? (n/1000000).toFixed(2)+'M' : Math.round(n/1000)+'K';
-    }}
-    var statsEl = document.createElement('div');
-    statsEl.style.cssText = 'position:absolute;bottom:12px;left:12px;background:rgba(13,13,15,0.88);border:1px solid #27272a;border-radius:5px;padding:9px 12px;';
-    statsEl.innerHTML = (
-      '<div style="margin-bottom:8px;">' +
-        '<div style="font-size:16pt;font-weight:700;letter-spacing:-0.03em;color:#d4d4d8;line-height:1;">' + fmtPop(totalPop) + '</div>' +
-        '<div style="font-size:6.5pt;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:#52525b;margin-top:2px;">Total Regional Population</div>' +
-      '</div>' +
-      '<div>' +
-        '<div style="font-size:16pt;font-weight:700;letter-spacing:-0.03em;color:#34d399;line-height:1;">' + fmtPop(bibbPop) + '</div>' +
-        '<div style="font-size:6.5pt;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:#52525b;margin-top:2px;">Macon-Bibb Population</div>' +
-      '</div>'
-    );
-    wrap.appendChild(statsEl);
+    function fmtPop(n) {{ return n>=1000000 ? (n/1000000).toFixed(2)+'M' : Math.round(n/1000)+'K'; }}
+    var sW=148, sH=80, sX=12, sY=H-sH-12;
+    var sG = svg.append('g').attr('transform','translate('+sX+','+sY+')');
+    sG.append('rect').attr('width',sW).attr('height',sH).attr('rx',6)
+      .attr('fill','#ffffff').attr('fill-opacity',0.95).attr('stroke','#e5e7eb').attr('stroke-width',1);
+    sG.append('text').text(fmtPop(totalPop)).attr('x',12).attr('y',26)
+      .attr('font-size',18).attr('font-weight',700).attr('font-family',FONT)
+      .attr('fill','#111827').attr('letter-spacing','-0.03em');
+    sG.append('text').text('TOTAL REGIONAL POPULATION').attr('x',12).attr('y',38)
+      .attr('font-size',7).attr('font-weight',600).attr('font-family',FONT)
+      .attr('fill','#9ca3af').attr('letter-spacing','0.05em');
+    sG.append('line').attr('x1',12).attr('y1',46).attr('x2',sW-12).attr('y2',46)
+      .attr('stroke','#f3f4f6').attr('stroke-width',1);
+    sG.append('text').text(fmtPop(bibbPop)).attr('x',12).attr('y',63)
+      .attr('font-size',18).attr('font-weight',700).attr('font-family',FONT)
+      .attr('fill','#2d5a27').attr('letter-spacing','-0.03em');
+    sG.append('text').text('MACON-BIBB POPULATION').attr('x',12).attr('y',75)
+      .attr('font-size',7).attr('font-weight',600).attr('font-family',FONT)
+      .attr('fill','#9ca3af').attr('letter-spacing','0.05em');
+
+    // SVG legend (bottom-right — renders in PDF)
+    var LEG = [
+      {{color:'#2d5a27', stroke:'#1a3818', label:'Macon-Bibb County'}},
+      {{color:'#c2410c', label:'Negative net commuting'}},
+      {{color:'#bbf7d0', label:'Positive net commuting'}},
+    ];
+    var lW=158, lH=14+LEG.length*18+8, lX=W-lW-12, lY=H-lH-12;
+    var lG = svg.append('g').attr('transform','translate('+lX+','+lY+')');
+    lG.append('rect').attr('width',lW).attr('height',lH).attr('rx',6)
+      .attr('fill','#ffffff').attr('fill-opacity',0.95).attr('stroke','#e5e7eb').attr('stroke-width',1);
+    lG.append('text').text('MAP KEY').attr('x',10).attr('y',14)
+      .attr('font-size',8).attr('font-weight',700).attr('font-family',FONT)
+      .attr('fill','#111827').attr('letter-spacing','0.06em');
+    LEG.forEach(function(item,i) {{
+      var iy = 22 + i*18;
+      lG.append('rect').attr('x',10).attr('y',iy).attr('width',11).attr('height',11).attr('rx',2)
+        .attr('fill',item.color)
+        .attr('stroke',item.stroke||'none').attr('stroke-width',item.stroke?1:0);
+      lG.append('text').text(item.label).attr('x',26).attr('y',iy+8.5)
+        .attr('font-size',9.5).attr('font-family',FONT).attr('fill','#6b7280');
+    }});
   }})();
 
   window.__chartsReady = true;
@@ -711,7 +803,7 @@ async def render_pdf(html, output_path):
                     <span>Source: JobsEQ · ACS 2024 &nbsp;·&nbsp; Macon-Bibb County, GA</span>
                     <span>Page <span class="pageNumber"></span> of <span class="totalPages"></span></span>
                 </div>''',
-                margin={'top': '0.65in', 'bottom': '0.65in', 'left': '0.7in', 'right': '0.7in'},
+                margin={'top': '0.55in', 'bottom': '0.6in', 'left': '0.55in', 'right': '0.55in'},
             )
             await browser.close()
     finally:
@@ -744,12 +836,15 @@ async def main():
 
     d = process(ind_rows, occ_rows, pop_rows, comm_rows)
 
+    logo_path = script_dir / 'Resources' / '32_greatermacon_531X354.webp'
+    logo_uri  = load_logo_png(logo_path) if logo_path.exists() else None
+
     output_dir = script_dir / 'reports' / 'pdf'
     output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / 'macon-overview.pdf'
 
     print('Building Macon Overview PDF...')
-    html = build_html(d, geo_json_str)
+    html = build_html(d, geo_json_str, logo_uri)
     await render_pdf(html, output_path)
     print(f'Saved → {output_path}')
 

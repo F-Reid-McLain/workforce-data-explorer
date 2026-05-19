@@ -197,7 +197,7 @@
         /* ── Map ────────────────────────────────────── */
         #regionMap {
             width: 100%;
-            height: 560px;
+            height: 616px;
             border-radius: var(--radius);
             border: 1px solid var(--border);
             overflow: hidden;
@@ -332,13 +332,13 @@
             text-overflow: ellipsis;
         }
         .demo-bar-track {
-            flex: 1; height: 6px;
+            flex: 1; height: 8px;
             background: var(--surface-2);
-            border-radius: 3px;
+            border-radius: 4px;
             overflow: hidden;
         }
         .demo-bar-fill {
-            height: 100%; border-radius: 3px;
+            height: 100%;
             transition: width .3s ease;
         }
         .demo-bar-pct {
@@ -395,14 +395,14 @@
             font-size: 0.7rem; font-weight: 700;
             color: var(--text-muted); width: 28px;
         }
-        .occ-lq {
+        .occ-growth {
             display: inline-flex; align-items: center;
             padding: 2px 7px; border-radius: 4px;
             font-size: 0.68rem; font-weight: 700;
         }
-        .occ-lq.high { background: #d1fae5; color: #065f46; }
-        .occ-lq.mid  { background: #fef3c7; color: #92400e; }
-        .occ-lq.low  { background: #f3f4f6; color: #6b7280; }
+        .occ-growth.pos  { background: #d1fae5; color: #065f46; }
+        .occ-growth.neg  { background: #fee2e2; color: #991b1b; }
+        .occ-growth.flat { background: #f3f4f6; color: #6b7280; }
 
         /* ── Reports footer ──────────────────────────── */
         .reports-grid {
@@ -438,10 +438,85 @@
             color: var(--accent); margin-top: 14px;
         }
 
+        /* ── Adjusted Metrics ───────────────────────────────── */
+        .adj-intro {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--teal);
+            border-radius: var(--radius);
+            padding: 18px 22px;
+            margin-bottom: 28px;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+        .adj-intro strong { color: var(--text); }
+        .adj-metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .adj-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 22px 22px 18px;
+        }
+        .adj-card-label {
+            font-size: 0.6rem; font-weight: 700;
+            letter-spacing: 0.1em; text-transform: uppercase;
+            color: var(--text-muted); margin-bottom: 12px;
+        }
+        .adj-compare {
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .adj-row {
+            display: flex; align-items: center; justify-content: space-between; gap: 10px;
+        }
+        .adj-row-label {
+            font-size: 0.72rem; color: var(--text-muted);
+            flex-shrink: 0;
+        }
+        .adj-row-val {
+            font-size: 1.1rem; font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+        .adj-row-val.highlight { color: var(--teal); }
+        .adj-row-val.muted { color: var(--text-muted); font-weight: 500; font-size: 0.9rem; }
+        .adj-divider { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
+        .adj-callouts {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+        .adj-callout {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px 20px;
+        }
+        .adj-callout-val {
+            font-size: 1.5rem; font-weight: 700;
+            letter-spacing: -0.03em; color: var(--text);
+            line-height: 1.1; margin-bottom: 6px;
+        }
+        .adj-callout-val.teal { color: var(--teal); }
+        .adj-callout-desc {
+            font-size: 0.74rem; color: var(--text-muted); line-height: 1.6;
+        }
+        .adj-source {
+            margin-top: 18px;
+            font-size: 0.68rem; color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            padding-top: 12px;
+        }
+
         @media (max-width: 860px) {
             .header-inner, .hero-content, .section { padding-left: 20px; padding-right: 20px; }
             .hero-kpis { grid-template-columns: repeat(2, 1fr); }
             .demo-grid { grid-template-columns: 1fr; }
+            .adj-metrics-grid, .adj-callouts { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -509,6 +584,83 @@
 
 <hr class="section-divider">
 
+<!-- ── Adjusted Metrics ──────────────────────────────────── -->
+<div class="section" style="padding-bottom:64px;">
+    <div class="section-label teal">Beyond the Headline Numbers</div>
+    <div class="section-title">Macon-Bibb's Adjusted Economic Picture</div>
+    <p class="section-desc">Standard Census metrics undercount Macon-Bibb's economic strength because they're residence-based — they miss the ~24,000 daily net in-commuters who earn wages here but are counted elsewhere. Workplace-adjusted figures tell a sharply different story.</p>
+
+    <div class="adj-intro">
+        <strong>Why the gap exists:</strong> About 40% of workers <em>employed</em> in Bibb County reside outside its borders. Residence-based income surveys assign those wages to surrounding counties, suppressing Macon-Bibb's reported income while inflating neighbors' figures — especially Houston County, whose high household-income ranking collapses once workplace-adjusted.
+    </div>
+
+    <div class="adj-metrics-grid">
+        <div class="adj-card">
+            <div class="adj-card-label">Median Earnings — Job Site vs. Residence</div>
+            <div class="adj-compare">
+                <div class="adj-row">
+                    <span class="adj-row-label">Adjusted (job-site)</span>
+                    <span class="adj-row-val highlight">$68,900</span>
+                </div>
+                <hr class="adj-divider">
+                <div class="adj-row">
+                    <span class="adj-row-label">Official household median</span>
+                    <span class="adj-row-val muted">$50,747</span>
+                </div>
+            </div>
+        </div>
+        <div class="adj-card">
+            <div class="adj-card-label">Per-Capita GDP — Macon-Bibb vs. Houston Co.</div>
+            <div class="adj-compare">
+                <div class="adj-row">
+                    <span class="adj-row-label">Macon-Bibb (workplace)</span>
+                    <span class="adj-row-val highlight">$67,292</span>
+                </div>
+                <hr class="adj-divider">
+                <div class="adj-row">
+                    <span class="adj-row-label">Houston County (adjusted)</span>
+                    <span class="adj-row-val muted">$54,547</span>
+                </div>
+            </div>
+        </div>
+        <div class="adj-card">
+            <div class="adj-card-label">Unemployment Rate — Adjusted vs. Official</div>
+            <div class="adj-compare">
+                <div class="adj-row">
+                    <span class="adj-row-label">Workplace-weighted (WWUR)</span>
+                    <span class="adj-row-val highlight">3.2%</span>
+                </div>
+                <hr class="adj-divider">
+                <div class="adj-row">
+                    <span class="adj-row-label">Official residence-based rate</span>
+                    <span class="adj-row-val muted">4.3%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="adj-callouts">
+        <div class="adj-callout">
+            <div class="adj-callout-val teal">60–70%</div>
+            <div class="adj-callout-desc">of retail spending in Macon-Bibb originates from <strong>non-residents</strong> — commuters and regional visitors — a direct economic multiplier not captured in local income surveys.</div>
+        </div>
+        <div class="adj-callout">
+            <div class="adj-callout-val teal">~$50K</div>
+            <div class="adj-callout-desc">Houston County's workplace-adjusted household income <strong>drops below $50,000</strong> once commuter wage flows are removed — reversing its perceived advantage over Macon-Bibb.</div>
+        </div>
+        <div class="adj-callout">
+            <div class="adj-callout-val teal">Near Full</div>
+            <div class="adj-callout-desc">Occupancy of Bibb County Industrial Authority parcels as of 2024 — indicating tight supply and strong demand for industrial space in the region.</div>
+        </div>
+    </div>
+
+    <div class="adj-source">
+        Source: George, A. (2025). <em>Reclassifying Municipal Realities: How Regional Data Distortions Undermine Investment in Middle Georgia.</em> Data derived from U.S. Census Quick Facts, BLS, LEHD/LODES Origin-Destination Employment Statistics, and BEA GDP data.
+    </div>
+</div>
+
+<hr class="section-divider">
+
 <!-- ── Industry Treemap ──────────────────────────────────── -->
 <div class="section">
     <div class="section-label">Industry Landscape</div>
@@ -541,8 +693,8 @@
             <div class="demo-stat-key">Labor Force Participation</div>
         </div>
         <div class="demo-stat">
-            <div class="demo-stat-val">24.7%</div>
-            <div class="demo-stat-key">Poverty Rate</div>
+            <div class="demo-stat-val">35 yrs</div>
+            <div class="demo-stat-key">Median Age</div>
         </div>
         <div class="demo-stat">
             <div class="demo-stat-val">9.5%</div>
@@ -572,7 +724,7 @@
 <div class="section">
     <div class="section-label teal">Top Occupations</div>
     <div class="section-title">In-Demand Roles</div>
-    <p class="section-desc">Top 15 occupations by employment in Macon-Bibb County. LQ &gt; 1.0 indicates above-average regional concentration vs. national average.</p>
+    <p class="section-desc">Top 15 occupations by employment in Macon-Bibb County.</p>
     <table class="occ-table">
         <thead>
             <tr>
@@ -580,7 +732,6 @@
                 <th>Occupation</th>
                 <th>Employment</th>
                 <th>Avg Annual Wage</th>
-                <th>Concentration (LQ)</th>
             </tr>
         </thead>
         <tbody id="occ-tbody"></tbody>
@@ -806,7 +957,7 @@ async function buildMap(commRows, popRows) {
     }
 
     const W = container.clientWidth || 900;
-    const H = 560;
+    const H = 616;
     const BIBB = '13021';
 
     const nonBibb = Object.entries(commLookup).filter(([f]) => f !== BIBB);
@@ -814,11 +965,11 @@ async function buildMap(commRows, popRows) {
     const maxNeg  = Math.max(0, ...nonBibb.filter(([,v]) => v <= 0).map(([,v]) => -v));
 
     const countyFill = fips => {
-        if (fips === BIBB) return '#166534';
+        if (fips === BIBB) return '#2d5a27';
         const comm = commLookup[fips] || 0;
         if (comm > 0) {
             const t = comm / (maxPos || 1);
-            return d3.interpolateRgb('#dcfce7', '#4ade80')(0.15 + t * 0.45);
+            return d3.interpolateRgb('#f0fdf4', '#bbf7d0')(t);
         }
         const t = -comm / (maxNeg || 1);
         return d3.interpolateRgb('#fff7ed', '#c2410c')(0.15 + t * 0.75);
@@ -857,14 +1008,25 @@ async function buildMap(commRows, popRows) {
         .attr('x', 16).attr('y', 40)
         .attr('font-size', 10).attr('font-family', FONT).attr('fill', '#9ca3af');
 
-    // County fills
+    // County fills — uniform light border so shared edges stay clean
     svg.append('g').selectAll('path')
         .data(geo.features)
         .join('path')
         .attr('d', pathGen)
         .attr('fill', d => countyFill(String(d.id).padStart(5, '0')))
-        .attr('stroke', d => String(d.id).padStart(5, '0') === BIBB ? '#052e16' : '#e2e8f0')
-        .attr('stroke-width', d => String(d.id).padStart(5, '0') === BIBB ? 2 : 1);
+        .attr('stroke', '#e2e8f0')
+        .attr('stroke-width', 1);
+
+    // Bibb border drawn on top so it never bleeds into neighbors
+    const bibbFeature = geo.features.find(d => String(d.id).padStart(5, '0') === BIBB);
+    if (bibbFeature) {
+        svg.append('path')
+            .datum(bibbFeature)
+            .attr('d', pathGen)
+            .attr('fill', 'none')
+            .attr('stroke', '#1a3818')
+            .attr('stroke-width', 2);
+    }
 
     // Labels on each county
     const labelG = svg.append('g').attr('font-family', FONT);
@@ -927,7 +1089,7 @@ async function buildMap(commRows, popRows) {
             const name   = nameLookup[fips] || 'Unknown';
             const pop    = (popLookup[fips]  || 0).toLocaleString();
             const comm   = commLookup[fips]  || 0;
-            const commColor = isBibb ? '#166534' : (comm > 0 ? '#15803d' : '#c2410c');
+            const commColor = isBibb ? '#2d5a27' : (comm > 0 ? '#15803d' : '#c2410c');
             const commLine  = `Net commuting balance: <strong style="color:${commColor}">${comm > 0 ? '+' : ''}${Math.round(comm).toLocaleString()}</strong>`;
             tip.innerHTML = `<strong style="color:#111827;display:block;margin-bottom:3px">${name} County</strong>Population: <strong style="color:#374151">${pop}</strong><br>${commLine}`;
             const rect = container.getBoundingClientRect();
@@ -964,7 +1126,7 @@ async function buildMap(commRows, popRows) {
     statsG.append('text').text(fmt(bibbPop))
         .attr('x', 12).attr('y', 63)
         .attr('font-size', 19).attr('font-weight', 700).attr('font-family', FONT)
-        .attr('fill', '#166534').attr('letter-spacing', '-0.03em');
+        .attr('fill', '#2d5a27').attr('letter-spacing', '-0.03em');
     statsG.append('text').text('MACON-BIBB POPULATION')
         .attr('x', 12).attr('y', 75)
         .attr('font-size', 7).attr('font-weight', 600).attr('font-family', FONT)
@@ -972,7 +1134,7 @@ async function buildMap(commRows, popRows) {
 
     // ── Legend (SVG — included in PNG export) ─────────────────
     const LEG_ITEMS = [
-        { color: '#166534', stroke: '#052e16', label: 'Macon-Bibb County' },
+        { color: '#2d5a27', stroke: '#1a3818', label: 'Macon-Bibb County' },
         { color: '#c2410c', label: 'Negative net commuting' },
         { color: '#16a34a', label: 'Positive net commuting' },
     ];
@@ -1128,16 +1290,13 @@ async function init() {
         .slice(0, 15);
 
     document.getElementById('occ-tbody').innerHTML = validOcc.map((r, i) => {
-        const lq  = toNum(r['LQ']);
-        const lqCls = lq >= 1.2 ? 'high' : lq >= 0.8 ? 'mid' : 'low';
         const wage = toNum(r['Mean Ann Wages2']);
         const wageStr = wage > 0 ? '$' + Math.round(wage).toLocaleString() : '—';
         return `<tr>
             <td class="occ-rank">${i + 1}</td>
-            <td style="font-weight:500;color:#fff">${r['Occupation']}</td>
+            <td style="font-weight:500">${r['Occupation']}</td>
             <td>${Math.round(toNum(r['Empl'])).toLocaleString()}</td>
             <td>${wageStr}</td>
-            <td>${lq > 0 ? `<span class="occ-lq ${lqCls}">${lq.toFixed(2)}×</span>` : '—'}</td>
         </tr>`;
     }).join('');
 }

@@ -152,6 +152,13 @@
             text-transform: uppercase;
             color: var(--text-muted);
         }
+        .kpi-note {
+            font-size: 0.58rem;
+            color: var(--text-muted);
+            opacity: 0.7;
+            margin-top: 5px;
+            line-height: 1.4;
+        }
 
         /* ── Section shell ──────────────────────────── */
         .section {
@@ -348,6 +355,34 @@
         .demo-stat-grid {
             display: grid; grid-template-columns: 1fr 1fr;
             gap: 12px; margin-top: 20px;
+        }
+
+        /* ── Occupation charts grid ─────────────────── */
+        .occ-charts-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .occ-chart-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px 20px;
+        }
+        .occ-chart-title {
+            font-size: 0.75rem; font-weight: 700;
+            color: var(--text); margin-bottom: 2px;
+        }
+        .occ-chart-sub {
+            font-size: 0.62rem; color: var(--text-muted);
+            margin-bottom: 14px;
+        }
+        .occ-bar-val {
+            font-size: 0.65rem; color: var(--text-muted);
+            width: 46px; text-align: right; flex-shrink: 0;
+        }
+        .occ-demand-grid {
+            display: grid; grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px; margin-top: 16px;
         }
         .demo-stat {
             background: var(--surface-2);
@@ -552,18 +587,22 @@
             <div class="kpi-block">
                 <div class="kpi-val" id="kpi-jobs">—</div>
                 <div class="kpi-label">Total Jobs</div>
+                <div class="kpi-note">Payroll positions (QCEW) — counts jobs, not unique workers</div>
             </div>
             <div class="kpi-block">
                 <div class="kpi-val" id="kpi-wage">—</div>
                 <div class="kpi-label">Avg Annual Wage</div>
+                <div class="kpi-note">Mean payroll wage per job · not household income</div>
             </div>
             <div class="kpi-block">
                 <div class="kpi-val" id="kpi-pop">—</div>
                 <div class="kpi-label">Population</div>
+                <div class="kpi-note">ACS 2024 estimate · residents, not workforce</div>
             </div>
             <div class="kpi-block">
                 <div class="kpi-val" id="kpi-commute">—</div>
                 <div class="kpi-label">Daily In-Commuters</div>
+                <div class="kpi-note">Net figure — workers entering Bibb minus residents leaving</div>
             </div>
             <div class="kpi-block">
                 <div class="kpi-val" id="kpi-top">—</div>
@@ -588,7 +627,7 @@
 <div class="section" style="padding-bottom:64px;">
     <div class="section-label teal">Beyond the Headline Numbers</div>
     <div class="section-title">Macon-Bibb's Adjusted Economic Picture</div>
-    <p class="section-desc">Standard Census metrics undercount Macon-Bibb's economic strength because they're residence-based — they miss the ~24,000 daily net in-commuters who earn wages here but are counted elsewhere. Workplace-adjusted figures tell a sharply different story.</p>
+    <p class="section-desc">About 40% of workers employed in Macon-Bibb live outside it. Standard Census metrics follow the worker home — understating the county's income and overstating its neighbors'. The figures below are adjusted for where the work actually happens.</p>
 
     <div class="adj-intro">
         <strong>Why the gap exists:</strong> About 40% of workers <em>employed</em> in Bibb County reside outside its borders. Residence-based income surveys assign those wages to surrounding counties, suppressing Macon-Bibb's reported income while inflating neighbors' figures — especially Houston County, whose high household-income ranking collapses once workplace-adjusted.
@@ -681,7 +720,7 @@
 <div class="section">
     <div class="section-label orange">Workforce Demographics</div>
     <div class="section-title">Who Lives Here</div>
-    <p class="section-desc">American Community Survey 2024 estimates for Macon-Bibb County.</p>
+    <p class="section-desc">American Community Survey 2024 estimates for Macon-Bibb County residents. Median household income ($50,747) reflects all income sources for households living here — distinct from the $55K avg annual wage above, which measures payroll per job regardless of where the worker lives.</p>
 
     <div class="demo-stat-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:28px;">
         <div class="demo-stat">
@@ -724,7 +763,7 @@
 <div class="section">
     <div class="section-label teal">Top Occupations</div>
     <div class="section-title">In-Demand Roles</div>
-    <p class="section-desc">Top 15 occupations by employment in Macon-Bibb County.</p>
+    <p class="section-desc">Top 15 occupations by employment in Macon-Bibb County (OES estimates). Employment figures count filled positions by occupation — totals differ from the QCEW payroll count above due to classification methodology. Avg Annual Wage is the mean OES wage for that occupation in this area; individual earnings vary.</p>
     <table class="occ-table">
         <thead>
             <tr>
@@ -736,6 +775,45 @@
         </thead>
         <tbody id="occ-tbody"></tbody>
     </table>
+</div>
+
+<hr class="section-divider">
+
+<!-- ── Occupation Intelligence Grid ─────────────────────── -->
+<div class="section">
+    <div class="section-label teal">Occupation Intelligence</div>
+    <div class="section-title">Labor Market Signals</div>
+    <p class="section-desc">Four views on Macon-Bibb's occupation landscape — where employment is growing, where employers are actively hiring, and where wages are highest.</p>
+    <div class="occ-charts-grid">
+        <div class="occ-chart-card">
+            <div class="occ-chart-title">Top Growing Occupations</div>
+            <div class="occ-chart-sub">1-year forecast growth rate · 5-digit SOC · min. 50 employees · JobsEQ 2025 Q3</div>
+            <div id="occ-proj-growth"></div>
+        </div>
+        <div class="occ-chart-card">
+            <div class="occ-chart-title">Top Paying Jobs</div>
+            <div class="occ-chart-sub">Mean annual wage</div>
+            <div id="occ-wage-mean"></div>
+        </div>
+    </div>
+
+    <div class="occ-demand-grid">
+        <div class="occ-chart-card">
+            <div class="occ-chart-title">Job Exits</div>
+            <div class="occ-chart-sub">Workers permanently leaving the occupation annually</div>
+            <div id="occ-exits"></div>
+        </div>
+        <div class="occ-chart-card">
+            <div class="occ-chart-title">Occupational Transfers</div>
+            <div class="occ-chart-sub">Workers moving into a different occupation annually</div>
+            <div id="occ-transfers"></div>
+        </div>
+        <div class="occ-chart-card">
+            <div class="occ-chart-title">Net New Positions</div>
+            <div class="occ-chart-sub">Projected net employment growth (absolute jobs added)</div>
+            <div id="occ-net-growth"></div>
+        </div>
+    </div>
 </div>
 
 <hr class="section-divider">
@@ -998,13 +1076,13 @@ async function buildMap(commRows, popRows) {
 
     // Chart title
     svg.append('text')
-        .text('Macon and Surrounding Counties')
+        .text('Where Central Georgia Works')
         .attr('x', 16).attr('y', 22)
         .attr('font-size', 14).attr('font-weight', 700)
         .attr('font-family', FONT)
         .attr('fill', '#111827');
     svg.append('text')
-        .text('< 1-hour drive radius  ·  net commuting balance by county')
+        .text('Net in-commuter flow by county  ·  1-hour drive radius')
         .attr('x', 16).attr('y', 40)
         .attr('font-size', 10).attr('font-family', FONT).attr('fill', '#9ca3af');
 
@@ -1192,13 +1270,14 @@ async function buildMap(commRows, popRows) {
 
 // ── Main init ─────────────────────────────────────────────
 async function init() {
-    let indRows, occRows, popRows, commRows;
+    let indRows, occRows, popRows, commRows, wageRows;
     try {
-        [indRows, occRows, popRows, commRows] = await Promise.all([
+    [indRows, occRows, popRows, commRows, wageRows] = await Promise.all([
             fetchCSV('Data/processed/Industry_Snapshot.csv'),
             fetchCSV('Data/processed/Occupation_Snapshot.csv'),
             fetchCSV('Data/processed/Population_By_County.csv'),
             fetchCSV('Data/processed/Net_Commuting.csv'),
+            fetchCSV('Data/processed/Occupation_Wages.csv'),
         ]);
     } catch(e) {
         console.error('Data load error:', e);
@@ -1282,6 +1361,135 @@ async function init() {
         { label: 'High School',     v: 0.304 },
         { label: 'No Diploma',      v: 0.112 },
     ], '#34d399');
+
+    // ── Occupation intelligence charts
+    function renderOccBars(containerId, items, formatVal, color) {
+        const max = Math.max(...items.map(i => i.v));
+        const trunc = s => s.length > 30 ? s.slice(0, 29) + '…' : s;
+        document.getElementById(containerId).innerHTML = items.map(({ label, v }) => `
+            <div class="demo-bar-row">
+                <div class="demo-bar-label">${trunc(label)}</div>
+                <div class="demo-bar-track">
+                    <div class="demo-bar-fill" style="width:${(v/max*100).toFixed(1)}%;background:${color};"></div>
+                </div>
+                <div class="occ-bar-val">${formatVal(v)}</div>
+            </div>`).join('');
+    }
+
+    const wageMap = {};
+    wageRows.forEach(r => { wageMap[r['SOC']] = r; });
+
+    // 6-digit only — filter summary rows, no employment cutoff here (applied at group level)
+    const base = occRows.filter(r =>
+        r['Occupation'] &&
+        r['SOC'] && r['SOC'].slice(-2) !== '00'
+    );
+
+    const fmtPct  = v => (v >= 0 ? '+' : '') + (v * 100).toFixed(1) + '%';
+    const fmtNum  = v => Math.round(v).toLocaleString();
+    const fmtWage = v => '$' + Math.round(v / 1000) + 'K';
+
+    // Aggregate to 4-digit SOC groups (e.g. '29-11' from '29-1141')
+    const SOC3_NAMES = {
+        '11-1':'Top Executives','11-2':'Advertising & Marketing Managers',
+        '11-3':'Operations Specialties Managers','11-9':'Other Managers',
+        '13-1':'Business Operations Specialists','13-2':'Financial Specialists',
+        '15-1':'Computer Occupations','15-2':'Mathematical Science Occupations',
+        '17-1':'Architects & Surveyors','17-2':'Engineers','17-3':'Engineering Technicians',
+        '19-1':'Life Scientists','19-2':'Physical Scientists','19-3':'Social Scientists',
+        '19-4':'Science Technicians','19-5':'Occupational Health & Safety',
+        '21-1':'Counselors & Social Workers','21-2':'Religious Workers',
+        '23-1':'Lawyers & Judges','23-2':'Legal Support Workers',
+        '25-1':'Postsecondary Teachers','25-2':'K-12 Teachers',
+        '25-3':'Other Teachers','25-4':'Librarians & Archivists','25-9':'Other Education',
+        '27-1':'Art & Design Workers','27-2':'Entertainers & Performers',
+        '27-3':'Media & Communications','27-4':'Media Equipment Workers',
+        '29-1':'Health Diagnosing & Treating','29-2':'Health Technologists',
+        '29-9':'Other Healthcare Practitioners',
+        '31-1':'Home Health & Personal Care Aides','31-2':'Therapy Assistants',
+        '31-9':'Other Healthcare Support',
+        '33-1':'Protective Service Supervisors','33-2':'Firefighting Workers',
+        '33-3':'Law Enforcement','33-9':'Other Protective Services',
+        '35-1':'Food Service Supervisors','35-2':'Cooks & Food Prep',
+        '35-3':'Food & Beverage Servers','35-9':'Other Food Service',
+        '37-1':'Grounds & Cleaning Supervisors','37-2':'Building Cleaning Workers',
+        '37-3':'Grounds Maintenance',
+        '39-1':'Personal Care Supervisors','39-2':'Animal Care Workers',
+        '39-3':'Entertainment Attendants','39-5':'Personal Appearance Workers',
+        '39-9':'Other Personal Care',
+        '41-1':'Sales Supervisors','41-2':'Retail Sales Workers',
+        '41-3':'Sales Reps, Services','41-4':'Sales Reps, Wholesale & Mfg',
+        '41-9':'Other Sales',
+        '43-1':'Admin Support Supervisors','43-2':'Communications Operators',
+        '43-3':'Financial Clerks','43-4':'Information & Record Clerks',
+        '43-5':'Material Recording & Dispatching','43-6':'Secretaries & Admin Assistants',
+        '43-9':'Other Office & Admin Support',
+        '45-2':'Agricultural Workers','45-4':'Forest & Logging Workers',
+        '47-1':'Construction Supervisors','47-2':'Construction Trades',
+        '47-3':'Construction Helpers','47-4':'Other Construction',
+        '47-5':'Extraction Workers',
+        '49-1':'Maintenance Supervisors','49-2':'Electrical & Electronic Repairers',
+        '49-3':'Vehicle Mechanics','49-9':'Other Maintenance & Repair',
+        '51-1':'Production Supervisors','51-2':'Assemblers & Fabricators',
+        '51-3':'Food Processing Workers','51-4':'Metal & Plastic Workers',
+        '51-5':'Printing Workers','51-6':'Textile & Apparel Workers',
+        '51-8':'Plant & System Operators','51-9':'Other Production',
+        '53-1':'Transportation Supervisors','53-2':'Air Transportation',
+        '53-3':'Motor Vehicle Operators','53-4':'Rail Transportation',
+        '53-7':'Material Moving Workers','53-9':'Other Transportation',
+    };
+
+    function buildSocGroups(rows, metric) {
+        const groups = {};
+        rows.forEach(r => {
+            const code = r['SOC'].slice(0, 6);
+            const empl = toNum(r['Empl']);
+            if (!groups[code]) groups[code] = { empl: 0, wsum: 0, firstName: r['Occupation'] };
+            groups[code].empl += empl;
+            groups[code].wsum += empl * toNum(r[metric]);
+        });
+        return Object.entries(groups)
+            .filter(([, g]) => g.empl >= 50)
+            .map(([code, g]) => ({
+                label: SOC3_NAMES[code] || g.firstName || code,
+                v: g.empl ? g.wsum / g.empl : 0
+            }));
+    }
+
+    const histGroups = buildSocGroups(base, 'Ann %');
+    const projGroups = buildSocGroups(base, 'Ann % Growth');
+
+
+    renderOccBars('occ-proj-growth',
+        projGroups.filter(g => g.v > 0).sort((a, b) => b.v - a.v).slice(0, 8),
+        fmtPct, '#2dd4bf');
+
+    const noTotal = r => !r['Occupation'].toLowerCase().includes('total');
+
+    renderOccBars('occ-exits',
+        base.filter(noTotal).filter(r => toNum(r['Exits']) > 0)
+            .sort((a, b) => toNum(b['Exits']) - toNum(a['Exits'])).slice(0, 5)
+            .map(r => ({ label: r['Occupation'], v: toNum(r['Exits']) })),
+        fmtNum, '#f59e0b');
+
+    renderOccBars('occ-transfers',
+        base.filter(noTotal).filter(r => toNum(r['Transfers']) > 0)
+            .sort((a, b) => toNum(b['Transfers']) - toNum(a['Transfers'])).slice(0, 5)
+            .map(r => ({ label: r['Occupation'], v: toNum(r['Transfers']) })),
+        fmtNum, '#818cf8');
+
+    renderOccBars('occ-net-growth',
+        base.filter(noTotal).filter(r => toNum(r['Empl Growth']) > 0)
+            .sort((a, b) => toNum(b['Empl Growth']) - toNum(a['Empl Growth'])).slice(0, 5)
+            .map(r => ({ label: r['Occupation'], v: toNum(r['Empl Growth']) })),
+        fmtNum, '#34d399');
+
+    renderOccBars('occ-wage-mean',
+        base.filter(r => toNum(r['Mean Ann Wages2']) > 0)
+            .sort((a, b) => toNum(b['Mean Ann Wages2']) - toNum(a['Mean Ann Wages2'])).slice(0, 8)
+            .map(r => ({ label: r['Occupation'], v: toNum(r['Mean Ann Wages2']) })),
+        fmtWage, '#f59e0b');
+
 
     // ── Occupations — top 15 by employment
     const validOcc = occRows

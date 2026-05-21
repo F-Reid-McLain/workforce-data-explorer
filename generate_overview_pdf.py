@@ -88,6 +88,37 @@ def load_logo_png(path):
     except Exception:
         return None
 
+def wrap_label(s, max_per_line=20):
+    """Split label at word boundaries into ≤2 lines. Returns str or [str, str]."""
+    if len(s) <= max_per_line:
+        return s
+    words = s.split()
+    line1 = []
+    for i, w in enumerate(words):
+        if len(' '.join(line1 + [w])) <= max_per_line:
+            line1.append(w)
+        else:
+            line2 = ' '.join(words[i:])
+            if len(line2) > max_per_line:
+                line2 = line2[:max_per_line - 1] + '…'
+            return [' '.join(line1), line2] if line1 else s
+    return ' '.join(line1)
+
+def build_soc_groups(snap_rows, metric, min_empl=50):
+    base = [r for r in snap_rows if not r.get('SOC', '').endswith('00')]
+    groups = {}
+    for r in base:
+        code = r['SOC'][:6]
+        empl = to_num(r.get('Empl', 0))
+        if code not in groups:
+            groups[code] = {'empl': 0.0, 'wsum': 0.0, 'first_name': r.get('Occupation', code)}
+        groups[code]['empl'] += empl
+        groups[code]['wsum'] += empl * to_num(r.get(metric, 0))
+    return [
+        {'label': g['first_name'], 'v': g['wsum'] / g['empl'] if g['empl'] else 0.0}
+        for g in groups.values() if g['empl'] >= min_empl
+    ]
+
 # ── Data processing ────────────────────────────────────────────────────────
 
 def process(ind_rows, occ_rows, pop_rows, comm_rows):
@@ -132,9 +163,12 @@ def process(ind_rows, occ_rows, pop_rows, comm_rows):
         key=lambda x: -x['comm']
     )
 
-    # Top occupations
+    # Top occupations (exclude summary/total rows)
     top_occ = sorted(
-        [r for r in occ_rows if to_num(r.get('Empl', 0)) > 0],
+        [r for r in occ_rows
+         if to_num(r.get('Empl', 0)) > 0
+         and not r.get('SOC', '').endswith('00')
+         and 'total' not in r.get('Occupation', '').lower()],
         key=lambda r: -to_num(r.get('Empl', 0))
     )[:15]
 
@@ -151,6 +185,31 @@ def process(ind_rows, occ_rows, pop_rows, comm_rows):
         for r in pop_rows
     ]
 
+    # Page 4 — Occupation Intelligence charts
+    soc_growth_groups = build_soc_groups(occ_rows, 'Ann % Growth', min_empl=50)
+    p4_growth = [{'label': wrap_label(g['label'], 25), 'v': round(g['v'], 4)}
+                 for g in sorted([g for g in soc_growth_groups if g['v'] > 0], key=lambda x: -x['v'])[:8]]
+
+    p4_wages = [{'label': wrap_label(g['label'], 25), 'v': round(g['v'])}
+                for g in sorted(
+                    [{'label': r.get('Occupation', ''), 'v': to_num(r.get('Mean Ann Wages2', 0))}
+                     for r in occ_rows
+                     if to_num(r.get('Mean Ann Wages2', 0)) > 0 and not r.get('SOC', '').endswith('00')],
+                    key=lambda x: -x['v'])[:8]]
+
+    base_no_total = [r for r in occ_rows
+                     if not r.get('SOC', '').endswith('00')
+                     and 'total' not in r.get('Occupation', '').lower()]
+    p4_exits = [{'label': wrap_label(r.get('Occupation', ''), 18), 'v': round(to_num(r.get('Exits', 0)))}
+                for r in sorted(base_no_total, key=lambda r: -to_num(r.get('Exits', 0)))[:5]
+                if to_num(r.get('Exits', 0)) > 0]
+    p4_transfers = [{'label': wrap_label(r.get('Occupation', ''), 18), 'v': round(to_num(r.get('Transfers', 0)))}
+                    for r in sorted(base_no_total, key=lambda r: -to_num(r.get('Transfers', 0)))[:5]
+                    if to_num(r.get('Transfers', 0)) > 0]
+    p4_net = [{'label': wrap_label(r.get('Occupation', ''), 18), 'v': round(to_num(r.get('Empl Growth', 0)))}
+              for r in sorted(base_no_total, key=lambda r: -to_num(r.get('Empl Growth', 0)))[:5]
+              if to_num(r.get('Empl Growth', 0)) > 0]
+
     return {
         'total_jobs':         total_jobs,
         'avg_wage':           avg_wage,
@@ -162,6 +221,11 @@ def process(ind_rows, occ_rows, pop_rows, comm_rows):
         'top_occ':            top_occ,
         'comm_map_data':      comm_map_data,
         'pop_map_data':       pop_map_data,
+        'p4_growth':          p4_growth,
+        'p4_wages':           p4_wages,
+        'p4_exits':           p4_exits,
+        'p4_transfers':       p4_transfers,
+        'p4_net':             p4_net,
     }
 
 # ── Occupation table HTML ──────────────────────────────────────────────────
@@ -194,7 +258,7 @@ def build_html(d, geo_json_str, logo_uri=None):
     ind_colors  = json.dumps([x['color'] for x in d['industries_sorted']])
     comm_map_json = json.dumps(d['comm_map_data'])
     pop_map_json  = json.dumps(d['pop_map_data'])
-    occ_table   = build_occ_table(d['top_occ'][:12])
+    occ_table   = build_occ_table(d['top_occ'][:11])
 
     # Demographics hardcoded from 2024 ACS
     age_labels  = json.dumps(['Under 18','18–24','25–34','35–44','45–54','55–64','65–74','75+'])
@@ -205,6 +269,11 @@ def build_html(d, geo_json_str, logo_uri=None):
     edu_vals    = json.dumps([13.3, 13.9, 9.0, 22.2, 30.4, 11.2])
 
     demo_h = 155
+    p4_growth_json    = json.dumps(d.get('p4_growth', []))
+    p4_wages_json     = json.dumps(d.get('p4_wages', []))
+    p4_exits_json     = json.dumps(d.get('p4_exits', []))
+    p4_transfers_json = json.dumps(d.get('p4_transfers', []))
+    p4_net_json       = json.dumps(d.get('p4_net', []))
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -272,7 +341,10 @@ def build_html(d, geo_json_str, logo_uri=None):
   }}
   .ff-label {{
     font-size: 5.5pt; font-weight: 600; letter-spacing: 0.09em;
-    text-transform: uppercase; color: #9ca3af;
+    text-transform: uppercase; color: #9ca3af; margin-bottom: 3pt;
+  }}
+  .ff-note {{
+    font-size: 5pt; color: #6b7280; line-height: 1.4;
   }}
 
   /* Shared section elements */
@@ -330,18 +402,22 @@ def build_html(d, geo_json_str, logo_uri=None):
     <div class="ff-card">
       <div class="ff-val">{fmt_num(d['total_jobs'])}</div>
       <div class="ff-label">Total Jobs</div>
+      <div class="ff-note">Payroll positions (QCEW) — counts jobs, not unique workers</div>
     </div>
     <div class="ff-card">
       <div class="ff-val">{fmt_dollar(d['avg_wage'])}</div>
       <div class="ff-label">Avg Annual Wage</div>
+      <div class="ff-note">Mean payroll wage per job · not household income</div>
     </div>
     <div class="ff-card">
       <div class="ff-val">{fmt_num(d['population'])}</div>
       <div class="ff-label">Population</div>
+      <div class="ff-note">ACS 2024 estimate · residents, not workforce</div>
     </div>
     <div class="ff-card">
       <div class="ff-val">+{fmt_num(d['net_commuters'])}</div>
       <div class="ff-label">Net In-Commuters</div>
+      <div class="ff-note">Workers entering Bibb minus residents leaving daily</div>
     </div>
     <div class="ff-card">
       <div class="ff-val" style="font-size:10pt;line-height:1.3;">{d['top_industry']}</div>
@@ -363,7 +439,7 @@ def build_html(d, geo_json_str, logo_uri=None):
   <!-- Adjusted metrics -->
   <div class="stag teal">The Real Economic Picture</div>
   <div class="section-title">Workplace-Adjusted Metrics</div>
-  <p class="section-sub">Standard Census figures are residence-based and miss ~24,000 daily net in-commuters. About 40% of workers <em>employed</em> in Bibb County live outside it — understating Macon-Bibb's income and overstating neighbors' prosperity.</p>
+  <p class="section-sub">About 40% of workers employed in Macon-Bibb live outside it. Standard Census metrics follow the worker home — understating the county's income and overstating its neighbors'. The figures below are adjusted for where the work actually happens.</p>
 
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9pt;margin-bottom:10pt;">
     <div class="stat-card">
@@ -422,7 +498,7 @@ def build_html(d, geo_json_str, logo_uri=None):
   <!-- Demographics -->
   <div class="stag orange">Workforce Demographics</div>
   <div class="section-title">Who Lives Here</div>
-  <p class="section-sub">American Community Survey 2024 estimates for Macon-Bibb County.</p>
+  <p class="section-sub">ACS 2024 estimates for Macon-Bibb County residents. Median household income ($50,747) reflects all income sources for households living here — distinct from the $55K avg annual wage on page 1, which measures payroll per job regardless of where the worker lives.</p>
 
   <div class="stat-grid">
     <div class="stat-card">
@@ -467,16 +543,58 @@ def build_html(d, geo_json_str, logo_uri=None):
   <div class="stag">Industry Landscape</div>
   <div class="section-title">Where Macon Works</div>
   <p class="section-sub">Top 10 sectors by employment — JobsEQ covered employment data, Macon-Bibb County.</p>
-  <div class="cbox" style="padding:10pt;margin-bottom:14pt;">
-    <canvas id="cind" width="560" height="188"></canvas>
+  <div class="cbox" style="padding:12pt;margin-bottom:14pt;display:flex;gap:14pt;align-items:center;">
+    <canvas id="cind" width="195" height="195" style="flex-shrink:0;"></canvas>
+    <div id="cind-legend" style="flex:1;"></div>
   </div>
 
   <!-- Occupations table -->
   <div class="stag teal">Top Occupations</div>
   <div class="section-title">In-Demand Roles</div>
-  <p class="section-sub">Top 12 occupations by employment in Macon-Bibb County. Growth % is the annual employment change rate.</p>
+  <p class="section-sub">Top 12 occupations by employment in Macon-Bibb County (OES estimates). Occupation employment counts filled positions by role — totals differ from the QCEW payroll figure on page 1 due to classification methodology. Avg Annual Wage is the mean OES wage for that occupation in this area.</p>
   <div class="cbox" style="padding:0;overflow:hidden;">
     {occ_table}
+  </div>
+
+</div>
+
+
+<!-- ══ PAGE 4: Occupation Intelligence ════════════════════ -->
+<div class="page content">
+
+  <div class="stag teal">Occupation Intelligence</div>
+  <div class="section-title">Workforce Outlook</div>
+  <p class="section-sub">5-digit SOC groups · min. 50 employees · 1-year forecast · JobsEQ 2025 Q3</p>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10pt;margin-bottom:12pt;">
+    <div class="cbox">
+      <div style="font-size:6pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9ca3af;margin-bottom:4pt;">Top Growing Occupations</div>
+      <div style="font-size:5.5pt;color:#9ca3af;margin-bottom:8pt;">1-year forecast growth rate · min. 50 employees</div>
+      <canvas id="cp4-growth" width="270" height="255"></canvas>
+    </div>
+    <div class="cbox">
+      <div style="font-size:6pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9ca3af;margin-bottom:4pt;">Top Paying Jobs</div>
+      <div style="font-size:5.5pt;color:#9ca3af;margin-bottom:8pt;">Mean annual wage · OES estimates</div>
+      <canvas id="cp4-wages" width="270" height="255"></canvas>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10pt;">
+    <div class="cbox">
+      <div style="font-size:6pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9ca3af;margin-bottom:4pt;">Job Exits</div>
+      <div style="font-size:5.5pt;color:#9ca3af;margin-bottom:8pt;">Workers permanently leaving the occupation</div>
+      <canvas id="cp4-exits" width="175" height="170"></canvas>
+    </div>
+    <div class="cbox">
+      <div style="font-size:6pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9ca3af;margin-bottom:4pt;">Occupational Transfers</div>
+      <div style="font-size:5.5pt;color:#9ca3af;margin-bottom:8pt;">Workers moving to a different occupation</div>
+      <canvas id="cp4-transfers" width="175" height="170"></canvas>
+    </div>
+    <div class="cbox">
+      <div style="font-size:6pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9ca3af;margin-bottom:4pt;">Net New Positions</div>
+      <div style="font-size:5.5pt;color:#9ca3af;margin-bottom:8pt;">Projected net employment growth</div>
+      <canvas id="cp4-net" width="175" height="170"></canvas>
+    </div>
   </div>
 
 </div>
@@ -513,19 +631,52 @@ def build_html(d, geo_json_str, logo_uri=None):
     }};
   }};
 
-  // Industry chart (top 10 only for compact layout)
+  // Industry doughnut
   var indEl = document.getElementById('cind');
   if (indEl) {{
-    var indLabels = {ind_labels}.slice(0,10);
-    var indEmpls  = {ind_empls}.slice(0,10);
-    var indColors = {ind_colors}.slice(0,10);
+    var allLabels = {ind_labels};
+    var allEmpls  = {ind_empls};
+    var allColors = {ind_colors};
+    var indTotal  = allEmpls.reduce(function(s, v) {{ return s + v; }}, 0);
+
+    // Top 10, merge remainder into "Other"
+    var showN = Math.min(10, allLabels.length);
+    var dLabels = allLabels.slice(0, showN);
+    var dEmpls  = allEmpls.slice(0, showN);
+    var dColors = allColors.slice(0, showN);
+    var otherEmpl = allEmpls.slice(showN).reduce(function(s, v) {{ return s + v; }}, 0);
+    if (otherEmpl > 0) {{
+      dLabels.push('Other'); dEmpls.push(otherEmpl); dColors.push('#94a3b8');
+    }}
+
+    // Legend
+    var legEl = document.getElementById('cind-legend');
+    if (legEl) {{
+      legEl.innerHTML = dLabels.map(function(lbl, i) {{
+        var pct = ((dEmpls[i] / indTotal) * 100).toFixed(1);
+        return '<div style="display:flex;align-items:center;gap:5pt;margin-bottom:5pt;">'
+          + '<span style="display:inline-block;width:8pt;height:8pt;border-radius:2pt;flex-shrink:0;background:' + dColors[i] + '"></span>'
+          + '<span style="flex:1;font-size:7pt;color:#374151;">' + lbl + '</span>'
+          + '<span style="font-size:7pt;color:#9ca3af;min-width:34pt;text-align:right;">' + fmtNum(dEmpls[i]) + '</span>'
+          + '<span style="font-size:7pt;color:#6b7280;min-width:28pt;text-align:right;">' + pct + '%</span>'
+          + '</div>';
+      }}).join('');
+    }}
+
     new Chart(indEl, {{
-      type: 'bar',
+      type: 'doughnut',
       data: {{
-        labels: indLabels,
-        datasets: [{{ data: indEmpls, backgroundColor: indColors, borderWidth: 0, barPercentage: 0.8, categoryPercentage: 1 }}],
+        labels: dLabels,
+        datasets: [{{ data: dEmpls, backgroundColor: dColors, borderColor: '#ffffff', borderWidth: 2 }}],
       }},
-      options: BAR_OPTS(56),
+      options: {{
+        animation: false, responsive: false, maintainAspectRatio: false, cutout: '58%',
+        plugins: {{
+          legend: {{ display: false }},
+          tooltip: {{ enabled: false }},
+          datalabels: {{ display: false }},
+        }},
+      }},
       plugins: [ChartDataLabels],
     }});
   }}
@@ -669,10 +820,10 @@ def build_html(d, geo_json_str, logo_uri=None):
     svg.append('rect').attr('width',W).attr('height',48).attr('fill','#fff');
     svg.append('line').attr('x1',0).attr('y1',48).attr('x2',W).attr('y2',48)
       .attr('stroke','#e5e7eb').attr('stroke-width',1);
-    svg.append('text').text('Macon and Surrounding Counties')
+    svg.append('text').text('Where Central Georgia Works')
       .attr('x',14).attr('y',20).attr('font-size',13).attr('font-weight',700)
       .attr('font-family',FONT).attr('fill','#111827').attr('letter-spacing','-0.02em');
-    svg.append('text').text('< 1-hour drive radius  ·  net commuting balance by county')
+    svg.append('text').text('Net in-commuter flow by county  ·  1-hour drive radius')
       .attr('x',14).attr('y',37).attr('font-size',9)
       .attr('font-family',FONT).attr('fill','#9ca3af');
 
@@ -772,6 +923,47 @@ def build_html(d, geo_json_str, logo_uri=None):
     }});
   }})();
 
+  // ── Page 4: Occupation Intelligence ──────────────────────
+  var P4_GROWTH    = {p4_growth_json};
+  var P4_WAGES     = {p4_wages_json};
+  var P4_EXITS     = {p4_exits_json};
+  var P4_TRANSFERS = {p4_transfers_json};
+  var P4_NET       = {p4_net_json};
+
+  function fmtPct(v) {{ return (v * 100).toFixed(2) + '%'; }}
+  function fmtDollar(v) {{ return '$' + (v >= 1000 ? Math.round(v / 1000) + 'K' : Math.round(v).toLocaleString()); }}
+
+  function mkP4Chart(elId, items, fmtFn, color, padRight) {{
+    var el = document.getElementById(elId);
+    if (!el || !items.length) return;
+    new Chart(el, {{
+      type: 'bar',
+      data: {{
+        labels: items.map(function(x) {{ return x.label; }}),
+        datasets: [{{ data: items.map(function(x) {{ return x.v; }}), backgroundColor: color, borderWidth: 0, barPercentage: 0.75, categoryPercentage: 1 }}],
+      }},
+      options: {{
+        indexAxis: 'y', animation: false, responsive: false, maintainAspectRatio: false,
+        layout: {{ padding: {{ right: padRight, top: 2, bottom: 2 }} }},
+        plugins: {{
+          legend: {{ display: false }}, tooltip: {{ enabled: false }},
+          datalabels: {{ anchor: 'end', align: 'right', clamp: false, clip: false, color: '#9ca3af', font: {{ size: 7, weight: '500' }}, formatter: fmtFn }},
+        }},
+        scales: {{
+          y: {{ grid: {{ display: false }}, border: {{ display: false }}, ticks: {{ color: '#374151', font: {{ size: 7 }}, maxRotation: 0 }} }},
+          x: {{ display: false }},
+        }},
+      }},
+      plugins: [ChartDataLabels],
+    }});
+  }}
+
+  mkP4Chart('cp4-growth',    P4_GROWTH,    fmtPct,    '#2dd4bf', 52);
+  mkP4Chart('cp4-wages',     P4_WAGES,     fmtDollar, '#f59e0b', 52);
+  mkP4Chart('cp4-exits',     P4_EXITS,     fmtNum,    '#f59e0b', 40);
+  mkP4Chart('cp4-transfers', P4_TRANSFERS, fmtNum,    '#818cf8', 40);
+  mkP4Chart('cp4-net',       P4_NET,       fmtNum,    '#34d399', 40);
+
   window.__chartsReady = true;
 }})();
 </script>
@@ -789,7 +981,8 @@ async def render_pdf(html, output_path):
     try:
         async with async_playwright() as p:
             browser = await p.chromium.launch()
-            page    = await browser.new_page()
+            context = await browser.new_context(device_scale_factor=2)
+            page    = await context.new_page()
             errors  = []
             page.on('pageerror', lambda e: errors.append(str(e)))
             await page.goto(tmp_path.as_uri(), wait_until='networkidle')
@@ -815,6 +1008,7 @@ async def render_pdf(html, output_path):
                 </div>''',
                 margin={'top': '0.55in', 'bottom': '0.6in', 'left': '0.55in', 'right': '0.55in'},
             )
+            await context.close()
             await browser.close()
     finally:
         tmp_path.unlink(missing_ok=True)

@@ -129,15 +129,32 @@ def process(ind_rows, occ_rows, pop_rows, comm_rows):
     total_jobs = round(to_num(total_row.get('Empl', 0)))
     avg_wage   = round(to_num(total_row.get('Avg Ann Wages', 0)))
 
-    # Industry employment totals
-    industry_totals = {}
+    # Industry employment totals + 5-year changes + wage sums
+    industry_totals   = {}
+    industry_changes  = {}
+    industry_wage_num = {}
     for r in data_rows:
-        naics = (r.get('NAICS') or '').strip()
-        empl  = to_num(r.get('Empl', 0))
+        naics  = (r.get('NAICS') or '').strip()
+        empl   = to_num(r.get('Empl', 0))
+        change = to_num(r.get('Empl Change', 0))
+        wage   = to_num(r.get('Avg Ann Wages', 0))
         for iid, cfg in INDUSTRIES.items():
             if any(naics.startswith(p) for p in cfg['prefixes']):
-                industry_totals[iid] = industry_totals.get(iid, 0) + empl
+                industry_totals[iid]   = industry_totals.get(iid, 0)   + empl
+                industry_changes[iid]  = industry_changes.get(iid, 0)  + change
+                industry_wage_num[iid] = industry_wage_num.get(iid, 0) + empl * wage
                 break
+
+    def _sector(iid):
+        empl   = industry_totals.get(iid, 0)
+        change = industry_changes.get(iid, 0)
+        prior  = empl - change
+        return {
+            'empl':       round(empl),
+            'jobs_added': round(change),
+            'growth_pct': round((change / prior) * 100, 1) if prior > 0 else 0,
+            'avg_wage':   round(industry_wage_num.get(iid, 0) / empl) if empl else 0,
+        }
 
     industries_sorted = sorted(
         [{'id': iid, 'name': INDUSTRIES[iid]['name'], 'empl': round(v), 'color': INDUSTRIES[iid]['color']}
@@ -145,8 +162,18 @@ def process(ind_rows, occ_rows, pop_rows, comm_rows):
         key=lambda x: -x['empl']
     )
 
-    # Top industry name
+    # Top industry name + 5-year growth
     top_industry = industries_sorted[0]['name'] if industries_sorted else '—'
+    top_industry_growth_pct  = None
+    top_industry_jobs_added  = None
+    if industries_sorted:
+        iid   = industries_sorted[0]['id']
+        curr  = industry_totals.get(iid, 0)
+        chg   = industry_changes.get(iid, 0)
+        prior = curr - chg
+        if prior > 0 and chg != 0:
+            top_industry_growth_pct = round((chg / prior) * 100, 1)
+            top_industry_jobs_added = round(chg)
 
     # Population and commuting (Bibb = FIPS 13021)
     bibb_pop  = next((to_num(r.get('Population', 0)) for r in pop_rows
@@ -219,8 +246,12 @@ def process(ind_rows, occ_rows, pop_rows, comm_rows):
         'industries_sorted':  industries_sorted,
         'surrounding':        surrounding,
         'top_occ':            top_occ,
-        'comm_map_data':      comm_map_data,
-        'pop_map_data':       pop_map_data,
+        'comm_map_data':           comm_map_data,
+        'pop_map_data':            pop_map_data,
+        'top_industry_growth_pct': top_industry_growth_pct,
+        'top_industry_jobs_added': top_industry_jobs_added,
+        'healthcare':              _sector('62'),
+        'manufacturing':           _sector('31'),
         'p4_growth':          p4_growth,
         'p4_wages':           p4_wages,
         'p4_exits':           p4_exits,
@@ -231,22 +262,27 @@ def process(ind_rows, occ_rows, pop_rows, comm_rows):
 # ── Occupation table HTML ──────────────────────────────────────────────────
 
 def build_occ_table(occ_rows):
-    th = 'padding:5pt 8pt;text-align:left;font-size:6.5pt;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#6b7280;white-space:nowrap;border-bottom:1pt solid #e5e7eb;'
-    td = 'padding:5pt 8pt;font-size:8pt;border-bottom:0.5pt solid #f3f4f6;'
+    th  = 'padding:4pt 7pt;text-align:left;font-size:7pt;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#6b7280;white-space:nowrap;border-bottom:1pt solid #e5e7eb;'
+    td  = 'padding:4pt 7pt;font-size:7.5pt;border-bottom:0.5pt solid #f3f4f6;'
     header = (f'<tr>'
               f'<th style="{th}">#</th>'
               f'<th style="{th}">Occupation</th>'
               f'<th style="{th};text-align:right">Employment</th>'
               f'<th style="{th};text-align:right">Avg Annual Wage</th>'
+              f'<th style="{th};text-align:right">5-Yr Growth</th>'
               f'</tr>')
     rows_html = ''
     for i, r in enumerate(occ_rows):
-        wage = to_num(r.get('Mean Ann Wages2', 0))
+        wage  = to_num(r.get('Mean Ann Wages2', 0))
+        ann   = to_num(r.get('Ann %', 0)) * 100
+        g_str = f'{ann:+.1f}%'
+        g_col = '#059669' if ann > 0 else ('#dc2626' if ann < 0 else '#9ca3af')
         rows_html += (f'<tr>'
                       f'<td style="{td}color:#9ca3af">{i+1}</td>'
                       f'<td style="{td}font-weight:500">{r.get("Occupation","")}</td>'
                       f'<td style="{td}text-align:right">{fmt_num(to_num(r.get("Empl",0)))}</td>'
                       f'<td style="{td}text-align:right">{fmt_dollar(wage) if wage > 0 else "—"}</td>'
+                      f'<td style="{td}text-align:right;font-weight:600;color:{g_col}">{g_str}</td>'
                       f'</tr>')
     return f'<table style="width:100%;border-collapse:collapse;"><thead>{header}</thead><tbody>{rows_html}</tbody></table>'
 
@@ -258,7 +294,7 @@ def build_html(d, geo_json_str, logo_uri=None):
     ind_colors  = json.dumps([x['color'] for x in d['industries_sorted']])
     comm_map_json = json.dumps(d['comm_map_data'])
     pop_map_json  = json.dumps(d['pop_map_data'])
-    occ_table   = build_occ_table(d['top_occ'][:11])
+    occ_table   = build_occ_table(d['top_occ'][:10])
 
     # Demographics hardcoded from 2024 ACS
     age_labels  = json.dumps(['Under 18','18–24','25–34','35–44','45–54','55–64','65–74','75+'])
@@ -349,7 +385,7 @@ def build_html(d, geo_json_str, logo_uri=None):
 
   /* Shared section elements */
   .stag {{
-    display: inline-block; font-size: 6pt; font-weight: 700;
+    display: inline-block; font-size: 6.5pt; font-weight: 700;
     letter-spacing: 0.1em; text-transform: uppercase;
     color: #4f46e5; border: 1pt solid #e0e7ff;
     background: #eef2ff; border-radius: 3pt; padding: 1pt 5pt;
@@ -365,7 +401,7 @@ def build_html(d, geo_json_str, logo_uri=None):
     font-size: 7.5pt; color: #6b7280; margin-bottom: 12pt; line-height: 1.6;
   }}
   .sdiv {{
-    font-size: 6.5pt; font-weight: 700; letter-spacing: 0.1em;
+    font-size: 7pt; font-weight: 700; letter-spacing: 0.1em;
     text-transform: uppercase; color: #9ca3af;
     border-top: 1pt solid #e5e7eb; padding-top: 7pt; margin: 14pt 0 9pt;
   }}
@@ -375,12 +411,12 @@ def build_html(d, geo_json_str, logo_uri=None):
   .stat-grid {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 9pt; margin-bottom: 14pt; }}
   .stat-card {{ background: #f9fafb; border: 1pt solid #e5e7eb; border-radius: 6pt; padding: 11pt; }}
   .stat-val {{ font-size: 15pt; font-weight: 700; color: #111827; letter-spacing: -0.02em; }}
-  .stat-key {{ font-size: 5.5pt; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.07em; margin-top: 3pt; }}
+  .stat-key {{ font-size: 6.5pt; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.07em; margin-top: 3pt; }}
 
   /* Demographics */
   .demo-grid {{ display: grid; grid-template-columns: repeat(3,1fr); gap: 10pt; }}
   .demo-card {{ background: #f9fafb; border: 1pt solid #e5e7eb; border-radius: 6pt; padding: 10pt; }}
-  .demo-title {{ font-size: 6pt; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #9ca3af; margin-bottom: 8pt; border-bottom: 1pt solid #e5e7eb; padding-bottom: 5pt; }}
+  .demo-title {{ font-size: 7pt; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #9ca3af; margin-bottom: 8pt; border-bottom: 1pt solid #e5e7eb; padding-bottom: 5pt; }}
 </style>
 </head>
 <body>
@@ -415,13 +451,14 @@ def build_html(d, geo_json_str, logo_uri=None):
       <div class="ff-note">ACS 2024 estimate · residents, not workforce</div>
     </div>
     <div class="ff-card">
-      <div class="ff-val">+{fmt_num(d['net_commuters'])}</div>
+      <div class="ff-val">+{d['net_commuters']:,}</div>
       <div class="ff-label">Net In-Commuters</div>
       <div class="ff-note">Workers entering Bibb minus residents leaving daily</div>
     </div>
     <div class="ff-card">
       <div class="ff-val" style="font-size:10pt;line-height:1.3;">{d['top_industry']}</div>
       <div class="ff-label">Largest Sector</div>
+      {f'<div class="ff-note" style="color:#059669;font-weight:600;">+{d["top_industry_growth_pct"]}% job growth over 5 years</div>' if d.get('top_industry_growth_pct') and d['top_industry_growth_pct'] > 0 else ''}
     </div>
   </div>
 
@@ -439,11 +476,11 @@ def build_html(d, geo_json_str, logo_uri=None):
   <!-- Adjusted metrics -->
   <div class="stag teal">The Real Economic Picture</div>
   <div class="section-title">Workplace-Adjusted Metrics</div>
-  <p class="section-sub">About 40% of workers employed in Macon-Bibb live outside it. Standard Census metrics follow the worker home — understating the county's income and overstating its neighbors'. The figures below are adjusted for where the work actually happens.</p>
+  <p class="section-sub">About 40% of workers employed in Macon-Bibb live outside it. Standard Census metrics follow the worker home — understating the county's income and overstating its neighbors'. The figures below are adjusted for where the work actually happens. This pattern exists because Macon-Bibb is the region's economic hub: the hospitals, professional offices, and major employers that surrounding rural counties rely on are here, so the workers come here too. Note also that the $55K average annual wage on page 1 reflects payroll jobs located here; the $50,747 household median below reflects where residents live — different populations, different measures.</p>
 
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9pt;margin-bottom:10pt;">
     <div class="stat-card">
-      <div style="font-size:5.5pt;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#9ca3af;margin-bottom:7pt;border-bottom:1pt solid #e5e7eb;padding-bottom:4pt;">Median Earnings — Job Site vs. Residence</div>
+      <div style="font-size:6.5pt;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#9ca3af;margin-bottom:7pt;border-bottom:1pt solid #e5e7eb;padding-bottom:4pt;">Median Earnings — Job Site vs. Residence</div>
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5pt;">
         <span style="font-size:6.5pt;color:#6b7280;">Adjusted (job-site)</span>
         <span style="font-size:14pt;font-weight:700;color:#059669;letter-spacing:-.02em;">$68,900</span>
@@ -454,7 +491,7 @@ def build_html(d, geo_json_str, logo_uri=None):
       </div>
     </div>
     <div class="stat-card">
-      <div style="font-size:5.5pt;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#9ca3af;margin-bottom:7pt;border-bottom:1pt solid #e5e7eb;padding-bottom:4pt;">Per-Capita GDP — Macon-Bibb vs. Houston Co.</div>
+      <div style="font-size:6.5pt;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#9ca3af;margin-bottom:7pt;border-bottom:1pt solid #e5e7eb;padding-bottom:4pt;">Per-Capita GDP — Macon-Bibb vs. Houston Co.</div>
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5pt;">
         <span style="font-size:6.5pt;color:#6b7280;">Macon-Bibb (workplace)</span>
         <span style="font-size:14pt;font-weight:700;color:#059669;letter-spacing:-.02em;">$67,292</span>
@@ -465,9 +502,9 @@ def build_html(d, geo_json_str, logo_uri=None):
       </div>
     </div>
     <div class="stat-card">
-      <div style="font-size:5.5pt;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#9ca3af;margin-bottom:7pt;border-bottom:1pt solid #e5e7eb;padding-bottom:4pt;">Unemployment — Workplace-Weighted vs. Official</div>
+      <div style="font-size:6.5pt;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#9ca3af;margin-bottom:7pt;border-bottom:1pt solid #e5e7eb;padding-bottom:4pt;">Unemployment — Workplace-Weighted vs. Official</div>
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5pt;">
-        <span style="font-size:6.5pt;color:#6b7280;">Adjusted WWUR</span>
+        <span style="font-size:6.5pt;color:#6b7280;">Adjusted Unemployment</span>
         <span style="font-size:14pt;font-weight:700;color:#059669;letter-spacing:-.02em;">3.2%</span>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:baseline;">
@@ -477,28 +514,20 @@ def build_html(d, geo_json_str, logo_uri=None):
     </div>
   </div>
 
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9pt;margin-bottom:10pt;">
+  <div style="margin-bottom:10pt;">
     <div class="stat-card" style="border-left:3pt solid #059669;">
       <div style="font-size:18pt;font-weight:700;color:#059669;letter-spacing:-.03em;line-height:1;margin-bottom:3pt;">60–70%</div>
-      <div style="font-size:7pt;color:#6b7280;line-height:1.5;">of retail spending originates from <strong style="color:#374151;">non-residents</strong> — commuters &amp; regional visitors.</div>
-    </div>
-    <div class="stat-card" style="border-left:3pt solid #059669;">
-      <div style="font-size:18pt;font-weight:700;color:#059669;letter-spacing:-.03em;line-height:1;margin-bottom:3pt;">&lt;$50K</div>
-      <div style="font-size:7pt;color:#6b7280;line-height:1.5;">Houston Co. adjusted income — <strong style="color:#374151;">below $50,000</strong> once commuter wage flows are removed.</div>
-    </div>
-    <div class="stat-card" style="border-left:3pt solid #059669;">
-      <div style="font-size:18pt;font-weight:700;color:#059669;letter-spacing:-.03em;line-height:1;margin-bottom:3pt;">Near Full</div>
-      <div style="font-size:7pt;color:#6b7280;line-height:1.5;">Industrial Authority parcel occupancy (2024) — strong demand despite lagging housing permits.</div>
+      <div style="font-size:7pt;color:#6b7280;line-height:1.5;">of retail spending in Macon-Bibb originates from <strong style="color:#374151;">non-residents</strong> — commuters and regional visitors whose wages are earned here but counted elsewhere in Census data.</div>
     </div>
   </div>
   <div style="font-size:6.5pt;color:#9ca3af;border-top:1pt solid #e5e7eb;padding-top:8pt;margin-bottom:16pt;">
-    Source: George, A. (2025). <em>Reclassifying Municipal Realities.</em> U.S. Census, BLS, LEHD/LODES, BEA.
+    Source: George, A. (2025). <em>Reclassifying Municipal Realities</em> (commissioned research). U.S. Census, BLS, LEHD/LODES, BEA.
   </div>
 
   <!-- Demographics -->
   <div class="stag orange">Workforce Demographics</div>
   <div class="section-title">Who Lives Here</div>
-  <p class="section-sub">ACS 2024 estimates for Macon-Bibb County residents. Median household income ($50,747) reflects all income sources for households living here — distinct from the $55K avg annual wage on page 1, which measures payroll per job regardless of where the worker lives.</p>
+  <p class="section-sub">ACS 2024 estimates for Macon-Bibb County residents.</p>
 
   <div class="stat-grid">
     <div class="stat-card">
@@ -506,8 +535,8 @@ def build_html(d, geo_json_str, logo_uri=None):
       <div class="stat-key">Population</div>
     </div>
     <div class="stat-card">
-      <div class="stat-val">56.6%</div>
-      <div class="stat-key">Labor Force Participation</div>
+      <div class="stat-val">77.0%</div>
+      <div class="stat-key">Prime-Age Participation · Ages 25–54</div>
     </div>
     <div class="stat-card">
       <div class="stat-val">35 yrs</div>
@@ -536,65 +565,112 @@ def build_html(d, geo_json_str, logo_uri=None):
 
 </div>
 
-<!-- ══ PAGE 3: Where Macon Works + In-Demand Roles ═════════ -->
+<!-- ══ PAGE 3: Where Macon Works ═══════════════════════════ -->
 <div class="page content">
 
-  <!-- Industry chart (top 10) -->
   <div class="stag">Industry Landscape</div>
-  <div class="section-title">Where Macon Works</div>
-  <p class="section-sub">Top 10 sectors by employment — JobsEQ covered employment data, Macon-Bibb County.</p>
-  <div class="cbox" style="padding:12pt;margin-bottom:14pt;display:flex;gap:14pt;align-items:center;">
-    <canvas id="cind" width="195" height="195" style="flex-shrink:0;"></canvas>
-    <div id="cind-legend" style="flex:1;"></div>
+  <div class="section-title" style="margin-bottom:4pt;">Where Macon Works</div>
+  <p class="section-sub" style="margin-bottom:10pt;">Macon-Bibb's economy is anchored by high-value service and production sectors. Healthcare and Manufacturing alone account for nearly {fmt_num(d['healthcare']['empl'] + d['manufacturing']['empl'])} jobs — and together have added more than {fmt_num(d['healthcare']['jobs_added'] + d['manufacturing']['jobs_added'])} positions over the past five years.</p>
+
+  <!-- Healthcare fast facts row -->
+  <div style="font-size:6.5pt;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#059669;margin-bottom:5pt;">Healthcare &amp; Social Assistance</div>
+  <div class="ff-grid" style="margin-bottom:8pt;">
+    <div class="ff-card" style="padding:8pt 10pt;">
+      <div class="ff-val" style="font-size:13pt;">{fmt_num(d['healthcare']['empl'])}</div>
+      <div class="ff-label">Total Jobs</div>
+      <div class="ff-note">Largest sector</div>
+    </div>
+    <div class="ff-card" style="padding:8pt 10pt;">
+      <div class="ff-val" style="font-size:13pt;color:#059669;">+{d['healthcare']['growth_pct']}%</div>
+      <div class="ff-label">5-Yr Employment Growth</div>
+      <div class="ff-note">5-yr cumulative · JobsEQ</div>
+    </div>
+    <div class="ff-card" style="padding:8pt 10pt;">
+      <div class="ff-val" style="font-size:13pt;">+{fmt_num(d['healthcare']['jobs_added'])}</div>
+      <div class="ff-label">Jobs Added · 5 Yrs</div>
+    </div>
+    <div class="ff-card" style="padding:8pt 10pt;">
+      <div class="ff-val" style="font-size:13pt;">{fmt_dollar(d['healthcare']['avg_wage'])}</div>
+      <div class="ff-label">Avg Annual Wage</div>
+      <div class="ff-note">QCEW · weighted</div>
+    </div>
+    <div class="ff-card" style="padding:8pt 10pt;">
+      <div class="ff-val" style="font-size:9pt;line-height:1.3;">Largest Sector</div>
+      <div class="ff-label">Regional Rank</div>
+      <div class="ff-note">Hub anchor</div>
+    </div>
   </div>
 
-  <!-- Occupations table -->
-  <div class="stag teal">Top Occupations</div>
-  <div class="section-title">In-Demand Roles</div>
-  <p class="section-sub">Top 12 occupations by employment in Macon-Bibb County (OES estimates). Occupation employment counts filled positions by role — totals differ from the QCEW payroll figure on page 1 due to classification methodology. Avg Annual Wage is the mean OES wage for that occupation in this area.</p>
-  <div class="cbox" style="padding:0;overflow:hidden;">
-    {occ_table}
+  <!-- Manufacturing fast facts row -->
+  <div style="font-size:6.5pt;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#3b82f6;margin-bottom:5pt;">Manufacturing</div>
+  <div class="ff-grid" style="margin-bottom:10pt;">
+    <div class="ff-card" style="padding:8pt 10pt;">
+      <div class="ff-val" style="font-size:13pt;">{fmt_num(d['manufacturing']['empl'])}</div>
+      <div class="ff-label">Total Jobs</div>
+    </div>
+    <div class="ff-card" style="padding:8pt 10pt;">
+      <div class="ff-val" style="font-size:13pt;color:#059669;">+{d['manufacturing']['growth_pct']}%</div>
+      <div class="ff-label">5-Yr Employment Growth</div>
+      <div class="ff-note">Fastest-growing</div>
+    </div>
+    <div class="ff-card" style="padding:8pt 10pt;">
+      <div class="ff-val" style="font-size:13pt;">+{fmt_num(d['manufacturing']['jobs_added'])}</div>
+      <div class="ff-label">Jobs Added · 5 Yrs</div>
+    </div>
+    <div class="ff-card" style="padding:8pt 10pt;">
+      <div class="ff-val" style="font-size:13pt;">{fmt_dollar(d['manufacturing']['avg_wage'])}</div>
+      <div class="ff-label">Avg Annual Wage</div>
+      <div class="ff-note">QCEW · weighted</div>
+    </div>
+    <div class="ff-card" style="padding:8pt 10pt;">
+      <div class="ff-val" style="font-size:9pt;line-height:1.3;">High-Value Growth</div>
+      <div class="ff-label">Sector Profile</div>
+      <div class="ff-note">High wage · rising</div>
+    </div>
+  </div>
+
+  <!-- Donut full-width -->
+  <div class="cbox" style="padding:12pt;">
+    <canvas id="cind" width="560" height="348" style="display:block;"></canvas>
+    <div id="cind-legend" style="margin-top:8pt;"></div>
   </div>
 
 </div>
 
 
-<!-- ══ PAGE 4: Occupation Intelligence ════════════════════ -->
+<!-- ══ PAGE 4: Workforce Outlook ══════════════════════════ -->
 <div class="page content">
 
-  <div class="stag teal">Occupation Intelligence</div>
-  <div class="section-title">Workforce Outlook</div>
-  <p class="section-sub">5-digit SOC groups · min. 50 employees · 1-year forecast · JobsEQ 2025 Q3</p>
+  <div class="stag teal">Workforce Outlook</div>
+  <div class="section-title" style="margin-bottom:4pt;">Occupation Intelligence</div>
+  <p class="section-sub" style="margin-bottom:8pt;">High-wage healthcare and professional roles are growing while routine, lower-wage work contracts — a split consistent with automation and structural shifts that together pull the workplace-adjusted median to $68,900.</p>
 
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10pt;margin-bottom:12pt;">
+  <!-- Top Growing + Top Paying charts -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10pt;margin-bottom:8pt;">
     <div class="cbox">
-      <div style="font-size:6pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9ca3af;margin-bottom:4pt;">Top Growing Occupations</div>
-      <div style="font-size:5.5pt;color:#9ca3af;margin-bottom:8pt;">1-year forecast growth rate · min. 50 employees</div>
-      <canvas id="cp4-growth" width="270" height="255"></canvas>
+      <div style="font-size:6.5pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9ca3af;margin-bottom:4pt;">Top Growing Occupations</div>
+      <div style="font-size:6pt;color:#9ca3af;margin-bottom:6pt;">1-year forecast growth rate · min. 50 employees · JobsEQ 2025 Q3</div>
+      <canvas id="cp4-growth" width="270" height="207"></canvas>
     </div>
     <div class="cbox">
-      <div style="font-size:6pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9ca3af;margin-bottom:4pt;">Top Paying Jobs</div>
-      <div style="font-size:5.5pt;color:#9ca3af;margin-bottom:8pt;">Mean annual wage · OES estimates</div>
-      <canvas id="cp4-wages" width="270" height="255"></canvas>
+      <div style="font-size:6.5pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9ca3af;margin-bottom:4pt;">Top Paying Jobs</div>
+      <div style="font-size:6pt;color:#9ca3af;margin-bottom:6pt;">Mean annual wage · OES estimates</div>
+      <canvas id="cp4-wages" width="270" height="207"></canvas>
     </div>
   </div>
 
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10pt;">
-    <div class="cbox">
-      <div style="font-size:6pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9ca3af;margin-bottom:4pt;">Job Exits</div>
-      <div style="font-size:5.5pt;color:#9ca3af;margin-bottom:8pt;">Workers permanently leaving the occupation</div>
-      <canvas id="cp4-exits" width="175" height="170"></canvas>
-    </div>
-    <div class="cbox">
-      <div style="font-size:6pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9ca3af;margin-bottom:4pt;">Occupational Transfers</div>
-      <div style="font-size:5.5pt;color:#9ca3af;margin-bottom:8pt;">Workers moving to a different occupation</div>
-      <canvas id="cp4-transfers" width="175" height="170"></canvas>
-    </div>
-    <div class="cbox">
-      <div style="font-size:6pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9ca3af;margin-bottom:4pt;">Net New Positions</div>
-      <div style="font-size:5.5pt;color:#9ca3af;margin-bottom:8pt;">Projected net employment growth</div>
-      <canvas id="cp4-net" width="175" height="170"></canvas>
-    </div>
+  <!-- In-Demand Roles table -->
+  <div class="stag teal">Top Occupations</div>
+  <div class="section-title" style="margin-bottom:4pt;">In-Demand Roles</div>
+  <p class="section-sub" style="margin-bottom:6pt;">Top 10 by employment · Occupational Employment Statistics (OES) · Macon-Bibb County.</p>
+  <div class="cbox" style="padding:0;overflow:hidden;">
+    {occ_table}
+  </div>
+
+  <!-- Closing forward-looking statement -->
+  <div style="margin-top:8pt;padding:7pt 12pt;background:#f0fdf4;border-left:3pt solid #059669;border-radius:4pt;page-break-inside:avoid;">
+    <div style="font-size:7.5pt;font-weight:700;color:#059669;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4pt;">Outlook</div>
+    <p style="font-size:7pt;color:#1e293b;line-height:1.6;margin:0;">Macon-Bibb's workforce is shifting toward higher-value employment — healthcare and professional roles are growing, manufacturing wages are rising, and automation is compressing low-wage routine roles while expanding demand for higher-skill work. A young median age and a growing anchor-employer base position the county for wage growth if training pipelines keep pace with employer demand.</p>
   </div>
 
 </div>
@@ -639,28 +715,45 @@ def build_html(d, geo_json_str, logo_uri=None):
     var allColors = {ind_colors};
     var indTotal  = allEmpls.reduce(function(s, v) {{ return s + v; }}, 0);
 
-    // Top 10, merge remainder into "Other"
-    var showN = Math.min(10, allLabels.length);
-    var dLabels = allLabels.slice(0, showN);
-    var dEmpls  = allEmpls.slice(0, showN);
-    var dColors = allColors.slice(0, showN);
-    var otherEmpl = allEmpls.slice(showN).reduce(function(s, v) {{ return s + v; }}, 0);
+    // Show any sector >= 3% of total; merge the rest into "Other"
+    var dLabels = [], dEmpls = [], dColors = [], otherEmpl = 0;
+    for (var i = 0; i < allLabels.length; i++) {{
+      if ((allEmpls[i] / indTotal) * 100 >= 3) {{
+        dLabels.push(allLabels[i]); dEmpls.push(allEmpls[i]); dColors.push(allColors[i]);
+      }} else {{
+        otherEmpl += allEmpls[i];
+      }}
+    }}
     if (otherEmpl > 0) {{
       dLabels.push('Other'); dEmpls.push(otherEmpl); dColors.push('#94a3b8');
     }}
 
-    // Legend
+    // Legend — 3-column grid below chart
     var legEl = document.getElementById('cind-legend');
     if (legEl) {{
-      legEl.innerHTML = dLabels.map(function(lbl, i) {{
-        var pct = ((dEmpls[i] / indTotal) * 100).toFixed(1);
-        return '<div style="display:flex;align-items:center;gap:5pt;margin-bottom:5pt;">'
-          + '<span style="display:inline-block;width:8pt;height:8pt;border-radius:2pt;flex-shrink:0;background:' + dColors[i] + '"></span>'
-          + '<span style="flex:1;font-size:7pt;color:#374151;">' + lbl + '</span>'
-          + '<span style="font-size:7pt;color:#9ca3af;min-width:34pt;text-align:right;">' + fmtNum(dEmpls[i]) + '</span>'
-          + '<span style="font-size:7pt;color:#6b7280;min-width:28pt;text-align:right;">' + pct + '%</span>'
-          + '</div>';
-      }}).join('');
+      legEl.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:3pt 10pt;">'
+        + dLabels.map(function(lbl, i) {{
+            var pct = ((dEmpls[i] / indTotal) * 100).toFixed(1);
+            return '<div style="display:flex;align-items:center;gap:5pt;">'
+              + '<span style="display:inline-block;width:8pt;height:8pt;border-radius:2pt;flex-shrink:0;background:' + dColors[i] + '"></span>'
+              + '<span style="flex:1;font-size:6.5pt;color:#374151;">' + lbl + '</span>'
+              + '<span style="font-size:6.5pt;color:#9ca3af;min-width:30pt;text-align:right;">' + fmtNum(dEmpls[i]) + '</span>'
+              + '<span style="font-size:6.5pt;color:#6b7280;min-width:22pt;text-align:right;">' + pct + '%</span>'
+              + '</div>';
+          }}).join('')
+        + '</div>';
+    }}
+
+    // Short names for slice labels
+    function shortName(s) {{
+      return s.replace('Health Care & Social Assistance','Healthcare')
+              .replace('Accommodation & Food Services','Accom. & Food')
+              .replace('Transportation & Warehousing','Transport & Whsg')
+              .replace('Educational Services','Education')
+              .replace('Public Administration','Public Admin')
+              .replace('Professional & Tech Services','Prof & Tech Services')
+              .replace('Administrative & Support','Admin & Support')
+              .replace('Management of Companies','Management');
     }}
 
     new Chart(indEl, {{
@@ -674,7 +767,20 @@ def build_html(d, geo_json_str, logo_uri=None):
         plugins: {{
           legend: {{ display: false }},
           tooltip: {{ enabled: false }},
-          datalabels: {{ display: false }},
+          datalabels: {{
+            display: function(ctx) {{
+              return (dEmpls[ctx.dataIndex] / indTotal) * 100 >= 4;
+            }},
+            formatter: function(v, ctx) {{
+              var pct = ((v / indTotal) * 100).toFixed(0) + '%';
+              return (v / indTotal) * 100 >= 8
+                ? shortName(dLabels[ctx.dataIndex]) + '\\n' + pct
+                : pct;
+            }},
+            color: '#1e293b',
+            font: {{ size: 7.5, weight: '600' }},
+            textAlign: 'center',
+          }},
         }},
       }},
       plugins: [ChartDataLabels],
@@ -958,11 +1064,8 @@ def build_html(d, geo_json_str, logo_uri=None):
     }});
   }}
 
-  mkP4Chart('cp4-growth',    P4_GROWTH,    fmtPct,    '#2dd4bf', 52);
-  mkP4Chart('cp4-wages',     P4_WAGES,     fmtDollar, '#f59e0b', 52);
-  mkP4Chart('cp4-exits',     P4_EXITS,     fmtNum,    '#f59e0b', 40);
-  mkP4Chart('cp4-transfers', P4_TRANSFERS, fmtNum,    '#818cf8', 40);
-  mkP4Chart('cp4-net',       P4_NET,       fmtNum,    '#34d399', 40);
+  mkP4Chart('cp4-growth', P4_GROWTH, fmtPct,    '#2dd4bf', 52);
+  mkP4Chart('cp4-wages',  P4_WAGES,  fmtDollar, '#f59e0b', 52);
 
   window.__chartsReady = true;
 }})();
@@ -1003,7 +1106,7 @@ async def render_pdf(html, output_path):
                     display:flex;justify-content:space-between;align-items:center;
                     border-top:0.5pt solid #e5e7eb;padding-top:3pt;
                     margin:0 0.7in;box-sizing:border-box;">
-                    <span>Source: JobsEQ · ACS 2024 &nbsp;·&nbsp; Macon-Bibb County, GA</span>
+                    <span>Source: JobsEQ 2025 Q3 &nbsp;·&nbsp; QCEW &nbsp;·&nbsp; OES (BLS) &nbsp;·&nbsp; ACS 2024 &nbsp;·&nbsp; Macon-Bibb County, GA</span>
                     <span>Page <span class="pageNumber"></span> of <span class="totalPages"></span></span>
                 </div>''',
                 margin={'top': '0.55in', 'bottom': '0.6in', 'left': '0.55in', 'right': '0.55in'},
